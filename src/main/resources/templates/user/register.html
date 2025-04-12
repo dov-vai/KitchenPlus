@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+    <div th:replace="~{fragments/head :: head(title='Register')}"></div>
+    <body>
+        <div class="container">
+          <form th:action="@{/register}" th:object="${registerForm}" method="post">
+
+            <div class="mb-3">
+              <label for="email" class="form-label">Email address</label>
+              <input type="email" class="form-control" name="email" id="email">
+              <div class="text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Error</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input type="password" class="form-control" name="password" id="password">
+              <div class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Error</div>
+            </div>
+
+            <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+              <ul>
+                <li th:each="err : ${#fields.globalErrors()}" th:text="${err}"></li>
+              </ul>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Register</button>
+          </form>
+
+          <p>Already own an account? Login <a href="/login">here</a>.</p>
+        </div>
+    </body>
+</html>
