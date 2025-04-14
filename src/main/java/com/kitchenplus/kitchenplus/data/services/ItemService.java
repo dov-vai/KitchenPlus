@@ -15,11 +15,11 @@ public class ItemService {
     @Autowired
     private ItemRepository itemRepository;
 
-    public List<Item> getAllItems() {
+    public List<Item> findAll() {
         return itemRepository.findAll();
     }
 
-    public Optional<Item> getItemById(Long id) {
+    public Optional<Item> get(Long id) {
         Optional<Item> item = itemRepository.findById(id);
         item.ifPresent(i -> {
             i.setLastTimeViewed(LocalDateTime.now());
@@ -28,11 +28,11 @@ public class ItemService {
         return item;
     }
 
-    public Item saveItem(Item item) {
+    public Item update(Item item) {
         return itemRepository.save(item);
     }
 
-    public void deleteItem(Long id) {
+    public void delete(Long id) {
         itemRepository.deleteById(id);
     }
 }

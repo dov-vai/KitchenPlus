@@ -24,23 +24,23 @@ public class ItemController {
     private ImageService imageService;
 
     @GetMapping
-    public String listItems(Model model) {
-        model.addAttribute("items", itemService.getAllItems());
+    public String getAllItems(Model model) {
+        model.addAttribute("items", itemService.findAll());
         return "itemList";
     }
 
     @GetMapping("/new")
-    public String showItemForm(Model model) {
+    public String insertItem(Model model) {
         model.addAttribute("item", new Item());
         model.addAttribute("image", new Image());
         return "itemForm";
     }
 
     @PostMapping("/save")
-    public String saveItem(@ModelAttribute Item item,
+    public String updateItem(@ModelAttribute Item item,
                            @RequestParam(value = "imageUrls", required = false) List<String> imageUrls,
                            RedirectAttributes redirectAttributes) {
-        Item savedItem = itemService.saveItem(item);
+        Item savedItem = itemService.update(item);
 
         savedItem.getImages().clear();
 
@@ -58,8 +58,8 @@ public class ItemController {
     }
 
     @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model) {
-        Item item = itemService.getItemById(id)
+    public String showItemForm(@PathVariable Long id, Model model) {
+        Item item = itemService.get(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid item ID"));
 
         List<String> imageUrls = item.getImages().stream()
@@ -73,7 +73,7 @@ public class ItemController {
 
     @GetMapping("/delete/{id}")
     public String deleteItem(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        itemService.deleteItem(id);
+        itemService.delete(id);
         redirectAttributes.addFlashAttribute("message", "Item deleted successfully!");
         return "redirect:/items";
     }
