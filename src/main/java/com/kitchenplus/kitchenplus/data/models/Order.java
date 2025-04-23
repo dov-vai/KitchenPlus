@@ -10,15 +10,18 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private LocalDateTime dateOfPlacing;
-    private double shippingCost;
-    private double sumOfOrder;
+    private double shippingCost = 0.0;
+    private double sumOfOrder = 0.0;
     private double pointsApplied;
     private LocalDateTime dateOfCompleted;
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
-
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderLine> orderLines = new ArrayList<>();
+
+    //for client association:
+
+
 
     public List<OrderLine> getOrderLines() {
         return orderLines;
