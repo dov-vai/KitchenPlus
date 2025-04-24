@@ -5,7 +5,6 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import org.hibernate.annotations.ColumnDefault;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,5 +22,5 @@ public class Client extends User {
     private boolean hasLoyaltyProgram  = false;
 
     @Column(nullable = true)
-    private LocalDateTime loyaltyProgramValidUntil = LocalDateTime.now();
+    private LocalDateTime loyaltyProgramValidUntil;
 }

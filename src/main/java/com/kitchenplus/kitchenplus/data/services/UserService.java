@@ -1,5 +1,6 @@
 package com.kitchenplus.kitchenplus.data.services;
 
+import com.kitchenplus.kitchenplus.data.models.Client;
 import com.kitchenplus.kitchenplus.data.models.Session;
 import com.kitchenplus.kitchenplus.data.models.User;
 import com.kitchenplus.kitchenplus.data.repositories.SessionRepository;
@@ -42,9 +43,9 @@ public class UserService {
      * @param password Password of the user
      * @return The created User object
      */
-    public User createUser(String email, String password) {
+    public Client createUser(String email, String password) {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); 
-        User user = new User();
+        Client user = new Client();
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         userRepository.save(user);
