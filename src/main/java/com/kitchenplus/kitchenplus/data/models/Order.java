@@ -1,8 +1,6 @@
 package com.kitchenplus.kitchenplus.data.models;
 import com.kitchenplus.kitchenplus.data.enums.OrderStatus;
 import jakarta.persistence.*;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,13 +10,13 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private LocalDate dateOfPlacing;
+    private LocalDateTime dateOfPlacing;
     private Double shippingCost = 0.0;
     private Double sumOfOrder = 0.0;
     @Column(nullable = true)
     private Double pointsApplied;
     @Column(nullable = true)
-    private LocalDate dateOfCompleted;
+    private LocalDateTime dateOfCompleted;
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
     @ManyToOne
@@ -62,10 +60,10 @@ public class Order {
     public void setId(Long id) {
         this.id = id;
     }
-    public LocalDate getDateOfPlacing() {
+    public LocalDateTime getDateOfPlacing() {
         return dateOfPlacing;
     }
-    public void setDateOfPlacing(LocalDate dateOfPlacing) {
+    public void setDateOfPlacing(LocalDateTime dateOfPlacing) {
         this.dateOfPlacing = dateOfPlacing;
     }
     public double getShippingCost() {
@@ -89,10 +87,10 @@ public class Order {
     public void setPointsApplied(double pointsApplied) {
         this.pointsApplied = pointsApplied;
     }
-    public LocalDate getDateOfCompleted() {
+    public LocalDateTime getDateOfCompleted() {
         return dateOfCompleted;
     }
-    public void setDateOfCompleted(LocalDate dateOfCompleted) {
+    public void setDateOfCompleted(LocalDateTime dateOfCompleted) {
         this.dateOfCompleted = dateOfCompleted;
     }
     public OrderStatus getStatus() {
