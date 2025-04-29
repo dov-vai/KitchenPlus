@@ -68,7 +68,7 @@ public class OrderController {
         //PAKEISTIIIIIII I CLIENT:
         return "redirect:/orders/all";
     }
-//fixxxxxxxxxxxxxxx:
+//---------------------------------------fix-----------------------------:
     @GetMapping("/client")
     public String showOrdersList(@RequestParam("email") String email, Model model) {
         Optional<User> user_exist = userService.getUserByEmail(email);

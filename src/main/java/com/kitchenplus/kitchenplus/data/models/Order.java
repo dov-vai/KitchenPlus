@@ -21,7 +21,7 @@ public class Order {
     private OrderStatus status;
     @ManyToOne
     @JoinColumn(name = "client_id")
-    private User client;
+    private Client client;
     @ManyToMany
     @JoinTable(
             name = "order_manager",
@@ -37,12 +37,10 @@ public class Order {
     public void setOrderLines(List<OrderLine> orderLines) {
         this.orderLines = orderLines;
     }
-
-
     public User getClient() {
         return client;
     }
-    public void setClient(User client) {
+    public void setClient(Client client) {
         this.client = client;
     }
 
