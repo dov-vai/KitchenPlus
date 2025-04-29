@@ -51,7 +51,9 @@
             </div>
         </div>
     </div>
-    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#exampleModalLong">Cancel order</button>
+    <form th:action="@{/orders/checkIfCancellable/{id}(id=${order.id})}" method="get">
+        <button type="submit" class="btn btn-danger" data-toggle="modal" data-target="#exampleModalLong">Cancel order</button>
+    </form>
 </div>
 <div style="display: flex; width: 100%;
  margin-left: 20px; justify-content: flex-start;gap: 15vh; align-items: flex-start; height: 80%; margin-top: 50px;  flex-direction: column"
@@ -70,7 +72,6 @@
             <h4 th:text="${orderLine.item.getName()}"
             >
             </h4>
-
             <div
                     style="display: flex; flex-direction: row; width: 45%; gap: 6px"
             >
