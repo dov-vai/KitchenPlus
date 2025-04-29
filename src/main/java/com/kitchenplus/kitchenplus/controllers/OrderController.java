@@ -60,11 +60,13 @@ public class OrderController {
         redirectAttributes.addFlashAttribute("message", "Order edited successfully!");
         return "redirect:/orders/all";
     }
-    @PostMapping("/update")
-    public String updateStatus(@ModelAttribute Order order, RedirectAttributes redirectAttributes) {
-        Order order_saved = orderService.update(order);
-        redirectAttributes.addFlashAttribute("message", "Order cancelled successfully!");
-        return "redirect:/orders/client";
+    @PostMapping("/update/{id}")
+    public String updateStatus(@PathVariable Long id, Model model) {
+        OrderStatus order_status = orderService.getOrderStatus(id);
+        model.addAttribute("status", order_status.name());
+        Order order_saved = orderService.update(id);
+        //PAKEISTIIIIIII I CLIENT:
+        return "redirect:/orders/all";
     }
 //fixxxxxxxxxxxxxxx:
     @GetMapping("/client")
@@ -95,15 +97,9 @@ public class OrderController {
         Duration duration = Duration.between(date_placed, now_time);
         if (duration.toDays() > 1) {
             model.addAttribute("message", "Order can't be cancelled");
+            return "redirect:/orders/client";
         }
-        OrderStatus status = order.getStatus();
-        if (status != OrderStatus.COMPLETED){
-            return "cancelForm";
-        }
-        else {
-            return "ordersList";
-        }
-
+        return "redirect:/orders/client";
     }
     @GetMapping("/shipping")
     public String showShippingDetails() {

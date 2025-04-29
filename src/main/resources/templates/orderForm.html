@@ -38,11 +38,15 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    ...
+                    Ar you sure you want to cancel this order?
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Cancel order</button>
+                    <form th:action="@{/orders/update/{id}(id=${order.id})}" method="post">
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-warning">Cancel order</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

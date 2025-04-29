@@ -70,8 +70,8 @@ public class OrderService {
         order_exist.setSumOfOrder(order.getSumOfOrder());
         return orderRepository.save(order_exist);
     }
-    public Order update(Order order){
-        Order order_exist = orderRepository.findById(order.getId()).orElseThrow(()->new RuntimeException("Order not found"));
+    public Order update(Long order_id){
+        Order order_exist = getSelectedOrderInformation(order_id);
         order_exist.setStatus(OrderStatus.CANCELED);
         return orderRepository.save(order_exist);
     }

@@ -21,18 +21,13 @@
         <tbody>
         <tr th:each="order : ${orders}">
             <th scope="row" th:text="${order.id}">1</th>
-            <td th:text="${#dates.format(order.dateOfPlacing, 'yyyy-MM-dd HH:mm')}">2025-04-26</td>
+            <td th:text="${#temporals.format(order.dateOfPlacing, 'yyyy-MM-dd HH:mm')}">2025-04-26</td>
             <td th:text="${#numbers.formatDecimal(order.sumOfOrder, 1, 2)}">sum</td>
-            <td th:text="${#dates.format(order.dateOfCompleted, 'yyyy-MM-dd HH:mm')}">2025-04-27</td>
+            <td th:text="${#temporals.format(order.dateOfCompleted, 'yyyy-MM-dd HH:mm')}">2025-04-27</td>
             <td th:text="${order.status}">status</td>
-            <td>
-                <a th:href="@{/orders/checkIfCancellable/{id}(id=${order.id})}" class="btn warning" onclick="return confirm('Are you sure?')">Cancel</a>
-            </td>
         </tr>
         </tbody>
     </table>
-
-
 </div>
 
 </body>
