@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My orders</title>
+</head>
+<body>
+<div
+        style="display: flex; justify-content: center; align-items: center; width: 80%; height: 80%; margin-top: 100px; margin-left: auto; margin-right: auto"
+>
+    <table class="table table-bordered" style="width: 100%; table-layout: fixed;">
+        <thead>
+        <tr>
+            <th scope="col">Order number</th>
+            <th scope="col">Date of placing</th>
+            <th scope="col">Sum of order</th>
+            <th scope="col">Order status</th>
+            <th scope="col">Cancel</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="order : ${orders}">
+            <th scope="row" th:text="${order.id}">1</th>
+            <td th:text="${#dates.format(order.dateOfPlacing, 'yyyy-MM-dd HH:mm')}">2025-04-26</td>
+            <td th:text="${#numbers.formatDecimal(order.sumOfOrder, 1, 2)}">sum</td>
+            <td th:text="${#dates.format(order.dateOfCompleted, 'yyyy-MM-dd HH:mm')}">2025-04-27</td>
+            <td th:text="${order.status}">status</td>
+            <td>
+                <a th:href="@{/orders/checkIfCancellable/{id}(id=${order.id})}" class="btn warning" onclick="return confirm('Are you sure?')">Cancel</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+
+</div>
+
+</body>
+</html>
