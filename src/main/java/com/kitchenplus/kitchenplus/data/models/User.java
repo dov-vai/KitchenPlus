@@ -1,6 +1,7 @@
 package com.kitchenplus.kitchenplus.data.models;
 
 import java.util.Collection;
+import java.util.List;
 
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,6 +22,9 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private String password;
+
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Order> orders;
 
     public void setEmail(String email) {
         this.email = email;
