@@ -11,7 +11,14 @@ public class DeliveryAddressService {
     @Autowired
     private DeliveryAddressRepository deliveryAddressRepository;
     public  void postAddress(DeliveryAddress deliveryAddress) {
-        deliveryAddressRepository.save(deliveryAddress);
+        try {
+            deliveryAddressRepository.save(deliveryAddress);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error while saving address: " + e.getMessage());
+        }
+
     }
 
 }
