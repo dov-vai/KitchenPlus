@@ -1,6 +1,7 @@
 package com.kitchenplus.kitchenplus.data.models;
 
 import java.util.Collection;
+import java.util.List;
 
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;

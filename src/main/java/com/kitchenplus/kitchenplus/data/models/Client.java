@@ -1,11 +1,10 @@
 package com.kitchenplus.kitchenplus.data.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @DiscriminatorValue("CLIENT")
@@ -13,6 +12,9 @@ public class Client extends User {
     @Column(nullable = false)
     @ColumnDefault("0")
     private int loyaltyPoints = 0;
+
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Order> orders;
 
     @Column(nullable = true)
     private LocalDateTime loyaltyPointsValidUntil;
