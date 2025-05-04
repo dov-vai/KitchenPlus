@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head(title='View Set')}"></div>
+<body>
+<div class="container mt-4">
+    <!-- Success message from creation redirect -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Set header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 th:text="${set.title}">Set Title</h2>
+            <p class="text-muted" th:if="${set.client != null}">
+                Client: <span th:text="${set.client.username}">Client Name</span>
+            </p>
+        </div>
+        <div>
+            <a th:href="@{/sets}" class="btn btn-outline-secondary me-2">
+                Back to Sets
+            </a>
+        </div>
+    </div>
+
+    <!-- Set summary card -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Set Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Total Items:</strong> <span
+                            th:text="${set.items != null ? set.items.size() : 0}">0</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Total Price:</strong> <span th:text="${'$' + #numbers.formatDecimal(totalPrice, 1, 2)}">$0.00</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items in the set -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Items in this Set</h5>
+        </div>
+        <div class="card-body p-0">
+            <div th:if="${set.items == null || set.items.isEmpty()}" class="p-4 text-center">
+                <p class="text-muted">This set doesn't contain any items.</p>
+            </div>
+
+            <div th:unless="${set.items == null || set.items.isEmpty()}">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">Image</th>
+                            <th>Name</th>
+                            <th>Dimensions</th>
+                            <th>Price</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="setItem : ${set.items}">
+                            <td>
+                                <img th:if="${setItem.item.firstImageLink != null}"
+                                     th:src="${setItem.item.firstImageLink}"
+                                     class="img-thumbnail" alt="Item image"
+                                     style="width: 60px; height: 60px; object-fit: cover;">
+                                <div th:if="${setItem.item.firstImageLink == null}"
+                                     class="bg-light d-flex align-items-center justify-content-center"
+                                     style="width: 60px; height: 60px;">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold" th:text="${setItem.item.name}">Item Name</div>
+                                <small class="text-muted text-truncate d-inline-block" style="max-width: 400px;"
+                                       th:text="${setItem.item.description}">Description</small>
+                            </td>
+                            <td>
+                                <span th:text="${setItem.item.width + ' × ' + setItem.item.height + ' × ' + setItem.item.length}">Dimensions</span>
+                            </td>
+                            <td>
+                                <span th:text="${'$' + #numbers.formatDecimal(setItem.item.price, 1, 2)}">$0.00</span>
+                            </td>
+                            <td>
+                                <a th:href="@{/items/{id}(id=${setItem.item.id})}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    View Item
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
