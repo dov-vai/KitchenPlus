@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head(title='View Plans')}"></div>
+<body>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Kitchen Plans</h2>
+        <div>
+            <a th:if="${setId != null}" th:href="@{/plans/{setId}(setId=${setId})/new}" class="btn btn-primary">
+                Create New Plan
+            </a>
+            <a th:href="@{/sets/{id}(id=${setId})}" class="btn btn-outline-secondary ms-2">
+                Back to Set
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert for no plans -->
+    <div th:if="${plans.empty}" class="alert alert-info">
+        No plans found for this set.
+    </div>
+
+    <!-- Plans grid -->
+    <div th:unless="${plans.empty}" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div class="col" th:each="plan : ${plans}">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${'Plan #' + plan.id}">Plan Title</h5>
+                    <p class="card-text">
+                        <span class="badge bg-secondary" th:text="${'Set: ' + plan.set.title}">Set Title</span>
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent d-flex justify-content-between">
+                    <a th:href="@{/plans/view/{id}(id=${plan.id})}" class="btn btn-sm btn-outline-primary">
+                        View Plan
+                    </a>
+                    <a th:href="@{/plans/edit/{id}(id=${plan.id})}" class="btn btn-sm btn-outline-secondary">
+                        Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
