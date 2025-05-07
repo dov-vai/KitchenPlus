@@ -77,4 +77,12 @@ public class ItemController {
         redirectAttributes.addFlashAttribute("message", "Item deleted successfully!");
         return "redirect:/items";
     }
+    @GetMapping("/{id}")
+    public String viewItemDetail(@PathVariable Long id, Model model) {
+        Item item = itemService.get(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid item ID"));
+        model.addAttribute("item", item);
+        return "itemDetail";
+    }
+
 }
