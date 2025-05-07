@@ -15,6 +15,7 @@
   </style>
 </head>
 <body>
+<div th:replace="fragments/header :: site-header"></div>
 <div class="container mt-4">
   <h1>Item List</h1>
 
@@ -23,7 +24,9 @@
   <div class="row">
     <div th:each="item : ${items}" class="col-md-4">
       <div class="card">
-        <img th:if="${item.getFirstImageLink() != null}" th:src="${item.getFirstImageLink()}" class="card-img-top" alt="Item image">
+        <a th:href="@{/items/{id}(id=${item.id})}">
+          <img th:src="${item.getFirstImageLink()}" class="card-img-top" alt="Item image">
+        </a>
         <img th:unless="${item.getFirstImageLink() != null}" src="https://via.placeholder.com/300x200?text=No+Image" class="card-img-top" alt="No image">
         <div class="card-body">
           <h5 class="card-title" th:text="${item.name}"></h5>

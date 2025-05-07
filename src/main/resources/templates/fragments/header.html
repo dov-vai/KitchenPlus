@@ -1,0 +1,24 @@
+﻿<!-- src/main/resources/templates/fragments/header.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="site-header">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">KitchenPlus</a>
+      <div class="d-flex">
+        <a href="/cart" class="btn btn-outline-secondary position-relative">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+               class="bi bi-cart" viewBox="0 0 16 16">
+            <path
+                    d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1.5 7A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.49-.402L1.61 3.607 1.28 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 6h8.17l1.2-5.6H3.102z"/>
+            <path
+                    d="M5 12a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </nav>
+</div>
+</body>
+</html>
