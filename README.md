@@ -1,6 +1,16 @@
 # KitchenPlus
 Kitchen furniture store
 
+# Mail configuration
+
+You may need to set the following values in **application.properties** if you want to send mails:
+```yaml
+custom.mail.host=
+custom.mail.port=
+custom.mail.username=
+custom.mail.password=
+```
+
 # Running
 
 Uses Java 21.
