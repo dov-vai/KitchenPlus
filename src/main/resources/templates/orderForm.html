@@ -15,6 +15,7 @@
     </style>
 </head>
 <body>
+<div th:replace="fragments/header :: site-header"></div>
 <div th:object="${order}" style="display: flex; justify-content: flex-start;gap: 15vh; align-items: flex-start; width: 80%; height: 80%;  flex-direction: column"
 >
     <h1>
@@ -25,9 +26,6 @@
         style="display: flex; justify-content: flex-start;gap: 15vh; align-items: flex-start; width: 80%; height: 80%; margin-top: 100px;  flex-direction: row"
 
 >
-    <h2>Delivery address</h2>
-    <h2>Payment method</h2>
-    <!-- Modal -->
     <div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
