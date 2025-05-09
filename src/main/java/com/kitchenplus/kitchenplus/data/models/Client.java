@@ -16,6 +16,11 @@ public class Client extends User {
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders;
 
+    public List<Order> getOrders() {
+        return orders;
+    }
+    @OneToOne(mappedBy = "client", cascade = CascadeType.ALL)
+    private DeliveryAddress deliveryAddress;
     @Column(nullable = true)
     private LocalDateTime loyaltyPointsValidUntil;
 
