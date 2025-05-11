@@ -16,7 +16,7 @@
 </head>
 <body>
 <div th:replace="fragments/header :: site-header"></div>
-<div th:object="${order}" style="display: flex; justify-content: flex-start;gap: 15vh; align-items: flex-start; width: 80%; height: 80%;  flex-direction: column"
+<div th:object="${order}" style="display: flex; justify-content: flex-start;gap: 10px; align-items: flex-start; width: 80%; height: 80%;  flex-direction: column"
 >
     <h1>
         Order Nr. <span th:text="${order.id}"></span>
@@ -49,9 +49,6 @@
             </div>
         </div>
     </div>
-    <form th:action="@{/orders/checkIfCancellable/{id}(id=${order.id})}" method="get">
-        <button type="submit" class="btn btn-danger" data-toggle="modal" data-target="#exampleModalLong">Cancel order</button>
-    </form>
 </div>
 <div style="display: flex; width: 100%;
  margin-left: 20px; justify-content: flex-start;gap: 15vh; align-items: flex-start; height: 80%; margin-top: 50px;  flex-direction: column"
@@ -85,7 +82,9 @@
         ><strong>€</strong>
             <span th:text="${orderLine.count * orderLine.unitPrice}"></span>
         </h4>
-
+        <form th:action="@{/orders/checkIfCancellable/{id}(id=${order.id})}" method="get">
+            <button type="submit" class="btn btn-danger" data-toggle="modal" data-target="#exampleModalLong">Cancel order</button>
+        </form>
     </div>
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
