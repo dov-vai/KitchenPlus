@@ -1,7 +1,5 @@
 package com.kitchenplus.kitchenplus.utils;
 
-import java.util.Arrays;
-
 public class DistanceUtils {
     private double latitudeWareHouse = 54.89077;
     private double longitudeWareHouse = 23.919353;
@@ -19,35 +17,6 @@ public class DistanceUtils {
                         Math.cos(latitudeWareHouse) *
                         Math.cos(lat2_);
         double c = 2 * Math.asin(Math.sqrt(a));
-        double distance = radiusOfEarth * c;
-        return distance;
-    }
-    private int[] setVertices(int V, int src){
-        int[] dist = new int[V];
-        Arrays.fill(dist, (int)1e8);
-        dist[src] = 0;
-        return dist;
-    }
-    public int[] BellmanFord(int V, int[][] edges, int src) {
-        int[] dist = setVertices(V, src);
-
-        // Relaxation of all the edges V times, not (V - 1) as we
-        // need one additional relaxation to detect negative cycle
-        for (int i = 0; i < V; i++) {
-            for (int[] edge : edges) {
-                int u = edge[0];
-                int v = edge[1];
-                int wt = edge[2];
-                if (dist[u] != 1e8 && dist[u] + wt < dist[v]) {
-                    // neigiamas ciklas:
-                    if (i == V - 1)
-                        return new int[]{-1};
-
-                    // atnaujint virsunes:
-                    dist[v] = dist[u] + wt;
-                }
-            }
-        }
-        return dist;
+        return radiusOfEarth * c;
     }
 }

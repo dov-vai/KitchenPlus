@@ -39,4 +39,10 @@ public class ShoppingCartController {
         return "redirect:/cart";
     }
 
+    @GetMapping("/confirm")
+    public String showConfirmation(Model model) {
+        model.addAttribute("cart", cartService.getCart(sessionCartId));
+        return "orderConfirmation";
+    }
+
 }
