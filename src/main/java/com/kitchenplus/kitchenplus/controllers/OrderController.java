@@ -18,6 +18,7 @@ import com.stripe.Stripe;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -148,6 +149,44 @@ public class OrderController {
             return false;
         }
     }
+    //-------------------------------------distance calculation---------------------
+    private int[] setVertices(int V, int src){
+        int[] dist = new int[V];
+        Arrays.fill(dist, (int)1e8);
+        dist[src] = 0;
+        return dist;
+    }
+    private boolean checkDistance(int[]dist, int v, int u, int wt){
+        return dist[u] != 1e8 && dist[u] + wt < dist[v];
+    }
+    private void updateShortestPath(int[] dist, int u, int v, int wt){
+        dist[v] = dist[u] + wt;
+    }
+
+    private boolean checkVerticeWeights(int V, int[][] edges, int src, int[] dist){
+        for (int i = 0; i < V; i++) {
+            for (int[] edge : edges) {
+                int u = edge[0];
+                int v = edge[1];
+                int wt = edge[2];
+                if (checkDistance(dist, v, u, wt)) {
+                    // neigiamas ciklas:
+                    if (i == V - 1)
+                        return false;
+                    // atnaujint virsunes:
+                    updateShortestPath(dist, u, v, wt);
+                }
+            }
+        }
+        return true;
+    }
+    public int[] checkNegativeWeights(int V, int[][] edges, int src) {
+        int[] dist = setVertices(V, src);
+        if (!checkVerticeWeights(V, edges, src, dist)) {
+            return new int[]{-1};
+        }
+        return dist;
+    }
 
     //calculate only shipping:
     @PostMapping("/shipping/cost")
@@ -157,9 +196,10 @@ public class OrderController {
         double distance_hervesine = distanceUtils.distanceHervesine(deliveryAddress.getLatitude(), deliveryAddress.getLongitude());
         int vertice_count = 2;
         int [][] edge = new int[vertice_count * (vertice_count - 1) / 2][3];
-        edge[0] = new int[]{0, 1, (int) distance_hervesine};
-        int[] weights = distanceUtils.BellmanFord(vertice_count, edge, 0);
-        double wt = weights[1]/1000;
+        int weight = Math.max(1, (int) Math.round(distance_hervesine));
+        edge[0] = new int[]{0, 1, weight};
+        int[] weights = checkNegativeWeights(vertice_count, edge, 0);
+        double wt = (double) weights[1]/10;
         if (wt > 8){
             shipping = wt * 5;
         }
@@ -182,11 +222,11 @@ public class OrderController {
         System.out.println("Shipping before adding: " + shippingCost);
         order.setShippingCost(shippingCost);
         order.setStatus(OrderStatus.IN_PROGRESS);
-        //-------------------------fix ------------------------
+        //--------------------TODO: APPLY POINTS---------------------------------:
         order.setPointsApplied(0);
         ShoppingCart shoppingCart = shoppingCartService.getCart(cartId);
         List<OrderLine> orderLines = new ArrayList<>();
-        order.setSumOfOrder(shoppingCart.getTotalPrice());
+        order.setSumOfOrder(shoppingCart.getTotalPrice() + shippingCost);
         for (CartItem item: shoppingCart.getItems()){
             OrderLine orderLine = new OrderLine();
             orderLine.setItem(item.getItem());
