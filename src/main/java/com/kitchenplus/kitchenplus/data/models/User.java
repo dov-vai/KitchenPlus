@@ -37,6 +37,15 @@ public class User implements UserDetails {
         throw new UnsupportedOperationException("Unimplemented method 'getAuthorities'");
     }
 
+    public int getAcccountAgeInYears() {
+        // TODO: implement this when the other PR is merged
+        return 0;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
     @Override
     public String getPassword() {
         return password;

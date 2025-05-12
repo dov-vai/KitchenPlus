@@ -1,6 +1,7 @@
 package com.kitchenplus.kitchenplus.controllers;
 import com.kitchenplus.kitchenplus.data.enums.OrderStatus;
 import com.kitchenplus.kitchenplus.data.models.*;
+import com.kitchenplus.kitchenplus.data.repositories.ClientRepository;
 import com.kitchenplus.kitchenplus.data.repositories.DeliveryAddressRepository;
 import com.kitchenplus.kitchenplus.data.repositories.SessionRepository;
 import com.kitchenplus.kitchenplus.data.services.*;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/orders")
@@ -41,6 +43,8 @@ public class OrderController {
     private ShoppingCartService shoppingCartService;
     @Autowired
     private DeliveryAddressRepository deliveryAddressRepository;
+    @Autowired
+    private ClientRepository clientRepository;
 
     @GetMapping("/all")
     public String showClientOrdersList(Model model) {
@@ -212,7 +216,7 @@ public class OrderController {
     public String showPlaceOrder(@CookieValue(value = "auth_token", required = false) String token, Model model) {
         Optional<Session> session = sessionRepository.findByToken(token);
         User user = session.get().getUser();
-        Client client = (Client) user;
+        var client = clientRepository.findById(user.getId()).orElseThrow(() -> new RuntimeException("Client not found"));
         DeliveryAddress deliveryAddress = deliveryAddressRepository.findDeliveryAddressByClient(client);
         double shippingCost = calculateShippingCost(deliveryAddress);
         Long cartId = 1L;
@@ -222,9 +226,20 @@ public class OrderController {
         System.out.println("Shipping before adding: " + shippingCost);
         order.setShippingCost(shippingCost);
         order.setStatus(OrderStatus.IN_PROGRESS);
-        //--------------------TODO: APPLY POINTS---------------------------------:
-        order.setPointsApplied(0);
+
+        // Calculate loyalty points
+        // for select items in the shopping cart
         ShoppingCart shoppingCart = shoppingCartService.getCart(cartId);
+        var filteredItems = shoppingCart.getItems().stream()
+            .filter(item -> item.getTotalPrice() >= 10)
+            .collect(Collectors.toList());
+        var points = calculateLoyaltyPoints(client, filteredItems);
+        client.addLoyaltyPoints(points);
+
+        // not sure what to do with the following line as I don't see anywhere
+        // where points are being used in the order according to lab 
+        // order.setPointsApplied(0);
+
         List<OrderLine> orderLines = new ArrayList<>();
         order.setSumOfOrder(shoppingCart.getTotalPrice() + shippingCost);
         for (CartItem item: shoppingCart.getItems()){
@@ -240,5 +255,35 @@ public class OrderController {
         System.out.println("order summ: " + order.getSumOfOrder());
         model.addAttribute("order", order);
         return  "placedOrder";
+    }
+
+    /**
+     * Calculates loyalty points for a client based on the items in their cart.
+     * @param client
+     * @param items
+     */
+    int calculateLoyaltyPoints(Client client, List<CartItem> items) {
+        double itemPriceSum = items.stream()
+            .reduce(0.0, (sum, item) -> sum + item.getTotalPrice(), Double::sum);
+        double calculatedPoints = 0;
+
+        if (itemPriceSum > 100) {
+            calculatedPoints = itemPriceSum * 0.05;
+        } else {
+            calculatedPoints = itemPriceSum * 0.01;
+        }
+
+        if (client.getAcccountAgeInYears() > 2) {
+            calculatedPoints += 1.5*itemPriceSum;
+        }
+
+        if (client.hasLoyaltyProgram()) {
+            calculatedPoints += 1.5*itemPriceSum;
+        }
+
+        if (calculatedPoints > 100) {
+            calculatedPoints = 100;
+        }
+        return (int) Math.ceil(calculatedPoints);
     }
 }
