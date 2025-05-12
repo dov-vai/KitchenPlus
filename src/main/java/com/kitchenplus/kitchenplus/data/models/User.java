@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 
 import jakarta.persistence.*;
+
+import org.springframework.cglib.core.Local;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -52,8 +54,7 @@ public class User implements UserDetails {
     }
 
     public int getAcccountAgeInYears() {
-        // TODO: implement this when the other PR is merged
-        return 0;
+        return LocalDateTime.now().getYear() - registrationDate.getYear();
     }
 
     public Long getId() {
