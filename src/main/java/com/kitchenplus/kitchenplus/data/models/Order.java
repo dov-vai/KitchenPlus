@@ -11,8 +11,10 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private LocalDateTime dateOfPlacing;
-    private Double shippingCost = 0.0;
-    private Double sumOfOrder = 0.0;
+    @Column(nullable = false)
+    private Double shippingCost;
+    @Column(nullable = false)
+    private Double sumOfOrder;
     @Column(nullable = true)
     private Double pointsApplied;
     @Column(nullable = true)
@@ -37,13 +39,12 @@ public class Order {
     public void setOrderLines(List<OrderLine> orderLines) {
         this.orderLines = orderLines;
     }
-    public User getClient() {
+    public Client getClient() {
         return client;
     }
     public void setClient(Client client) {
         this.client = client;
     }
-
 
     public List<Manager> getManagers() {
         return managers;

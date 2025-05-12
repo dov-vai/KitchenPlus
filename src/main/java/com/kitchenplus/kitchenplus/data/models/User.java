@@ -51,6 +51,11 @@ public class User implements UserDetails {
         return email;
     }
 
+    public int getAcccountAgeInYears() {
+        // TODO: implement this when the other PR is merged
+        return 0;
+    }
+
     public Long getId() {
         return id;
     }
