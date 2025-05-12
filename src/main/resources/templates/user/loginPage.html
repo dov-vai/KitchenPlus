@@ -3,6 +3,10 @@
   <div th:replace="~{fragments/head :: head(title='Login')}"></div>
   <body>
     <div class="container">
+
+      <h1>Login</h1>
+      <p>Welcome! Please enter your credentials to log in.</p>
+
       <form th:action="@{/login}" th:object="${loginForm}" method="post">
 
         <div class="mb-3">
@@ -17,11 +21,14 @@
           <div class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Error</div>
         </div>
 
-        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
+        <!-- List errors if there's more than one -->
+        <div th:if="${#fields.globalErrors().size() > 1}" class="alert alert-danger">
           <ul>
             <li th:each="err : ${#fields.globalErrors()}" th:text="${err}"></li>
           </ul>
         </div>
+        <!-- If only one global error, display it directly -->
+        <div th:if="${#fields.globalErrors().size() == 1}" th:text="${#fields.globalErrors().get(0)}" class="alert alert-danger" role="alert"></div>
 
         <div th:if="${success}" th:text="${success}" class="alert alert-success" role="alert"></div>
 
@@ -29,16 +36,7 @@
       </form>
 
       <p>Don't yet have an account? Register <a href="/register">here</a>.</p>
-      <p>Forgot password? Remind it <a href="/remind-password">here</a>.</p>
+      <!--<p>Forgot password? Remind it <a href="/remind-password">here</a>.</p>-->
     </div>
   </body>
-  <script>
-    // Hide the alert after 5 seconds
-    setTimeout(function() {
-      const alert = document.querySelector('.alert');
-      if (alert) {
-        alert.style.display = 'none';
-      }
-    }, 7500);
-  </script>
 </html>

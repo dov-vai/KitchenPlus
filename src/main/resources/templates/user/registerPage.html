@@ -3,6 +3,10 @@
   <div th:replace="~{fragments/head :: head(title='Register')}"></div>
   <body>
     <div class="container">
+
+      <h1>Register</h1>
+      <p>Welcome! Please enter your credentials to register.</p>
+
       <form th:action="@{/register}" th:object="${registerForm}" method="post">
 
         <div class="mb-3">
@@ -17,11 +21,14 @@
           <div class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Error</div>
         </div>
 
-        <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+        <!-- List errors if there's more than one -->
+        <div th:if="${#fields.globalErrors().size() > 1}" class="alert alert-danger">
           <ul>
             <li th:each="err : ${#fields.globalErrors()}" th:text="${err}"></li>
           </ul>
         </div>
+        <!-- If only one global error, display it directly -->
+        <div th:if="${#fields.globalErrors().size() == 1}" th:text="${#fields.globalErrors().get(0)}" class="alert alert-danger" role="alert"></div>
 
         <button type="submit" class="btn btn-primary">Register</button>
       </form>

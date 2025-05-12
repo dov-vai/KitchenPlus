@@ -1,5 +1,6 @@
 package com.kitchenplus.kitchenplus.data.models;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,6 +24,15 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    private boolean isEmailConfirmed = false;
+
+    @Column(nullable = false)
+    private LocalDateTime registrationDate = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "user")
+    private List<ConfirmationLink> confirmationLinks;
+
     public void setEmail(String email) {
         this.email = email;
     }
@@ -37,6 +47,10 @@ public class User implements UserDetails {
         throw new UnsupportedOperationException("Unimplemented method 'getAuthorities'");
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public int getAcccountAgeInYears() {
         // TODO: implement this when the other PR is merged
         return 0;
@@ -44,6 +58,10 @@ public class User implements UserDetails {
 
     public Long getId() {
         return id;
+    }
+
+    public void setEmailConfirmed(boolean isEmailConfirmed) {
+        this.isEmailConfirmed = isEmailConfirmed;
     }
 
     @Override
@@ -55,4 +73,9 @@ public class User implements UserDetails {
     public String getUsername() {
         return email;
     }
+
+    public boolean isEmailConfirmed() {
+        return isEmailConfirmed;
+    }
+
 }
