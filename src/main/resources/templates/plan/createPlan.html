@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head(title='Create Plan')}"></div>
+<head>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+        }
+
+        #pixi-container {
+            flex-grow: 1;
+            border: 1px solid #ccc;
+            cursor: grab;
+        }
+
+        .controls {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .control-group {
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+<div id="pixi-container"></div>
+
+<div class="controls">
+    <h4>Create Room Plan</h4>
+    <button id="addNodeBtn" class="btn btn-primary btn-sm">Add Node</button>
+    <button id="saveContourBtn" class="btn btn-success btn-sm">Save</button>
+    <div class="mt-2">
+        <small>Zoom: Mouse Wheel. Pan: Right Click + Drag.</small><br>
+    </div>
+    <hr>
+    <div id="selectionControls">
+        <div id="nodeControls" class="hidden control-group">
+            <h5>Node Controls</h5>
+            <p>Selected Node ID: <span id="selectedNodeId"></span></p>
+            <div class="form-group">
+                <label for="nodeAngle">Angle to Next (degrees):</label>
+                <input type="number" id="nodeAngle" class="form-control form-control-sm" step="any">
+            </div>
+            <button id="setNodeAngleBtn" class="btn btn-info btn-sm">Set Angle</button>
+            <button id="removeNodeBtn" class="btn btn-danger btn-sm">Remove Node</button>
+        </div>
+
+        <div id="edgeControls" class="hidden control-group">
+            <h5>Edge Controls</h5>
+            <p>Selected Edge: <span id="selectedEdgeNodes"></span></p>
+            <div class="form-group">
+                <label for="edgeDistance">Distance (cm):</label>
+                <input type="number" id="edgeDistance" class="form-control form-control-sm" step="any">
+            </div>
+            <button id="setEdgeDistanceBtn" class="btn btn-info btn-sm">Set Distance</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://pixijs.download/v8.9.2/pixi.js"></script>
+<script th:inline="javascript">
+    // grab setId from model
+    const setId = [[${setId}]];
+</script>
+<script>
+    (async () => {
+        // initialize the pixi canvas
+        const app = new PIXI.Application();
+
+        await app.init({
+            antialias: true,
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
+            backgroundColor: 0xeeeeee,
+            resizeTo: document.getElementById("pixi-container")
+        });
+
+        document.getElementById("pixi-container").appendChild(app.canvas);
+
+        const stage = new PIXI.Container();
+        app.stage.addChild(stage);
+        stage.eventMode = "static";
+        stage.hitArea = app.screen;
+
+        // app state
+        let nodes = [];
+        let nodeIdCounter = 0;
+        let selectedNode = null;
+        let selectedEdge = null; // { node1: Node, node2: Node, graphics: PIXI.Graphics }
+
+        const NODE_RADIUS = 8;
+        const LINE_THICKNESS = 3;
+        const HIT_AREA_PADDING = 10;
+
+        // ui elements
+        const addNodeBtn = document.getElementById("addNodeBtn");
+        const saveContourBtn = document.getElementById("saveContourBtn");
+        const nodeControlsUI = document.getElementById("nodeControls");
+        const selectedNodeIdUI = document.getElementById("selectedNodeId");
+        const nodeAngleInput = document.getElementById("nodeAngle");
+        const setNodeAngleBtn = document.getElementById("setNodeAngleBtn");
+        const removeNodeBtn = document.getElementById("removeNodeBtn");
+
+        const edgeControlsUI = document.getElementById("edgeControls");
+        const selectedEdgeNodesUI = document.getElementById("selectedEdgeNodes");
+        const edgeDistanceInput = document.getElementById("edgeDistance");
+        const setEdgeDistanceBtn = document.getElementById("setEdgeDistanceBtn");
+
+        saveContourBtn.addEventListener("click", async function () {
+            if (nodes.length < 3) {
+                alert("Please create at least 3 nodes to form a valid room contour.");
+                return;
+            }
+
+            const nodeData = nodes.map(node => ({
+                id: node.id,
+                x: node.x,
+                y: node.y
+            }));
+
+            try {
+                const response = await fetch(`/plans/new/${setId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        nodes: nodeData
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    window.location.href = data.redirect;
+                }
+            } catch (error) {
+                console.error("Error saving contour:", error);
+                alert("An error occurred while saving the room contour.");
+            }
+        });
+
+        // helper functions
+        function getDistance(p1, p2) {
+            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        }
+
+        function getAngle(p1, p2) { // Angle in radians of vector p1->p2 relative to positive x-axis
+            return Math.atan2(p2.y - p1.y, p2.x - p1.x);
+        }
+
+        function degreesToRadians(degrees) {
+            return degrees * (Math.PI / 180);
+        }
+
+        function radiansToDegrees(radians) {
+            return radians * (180 / Math.PI);
+        }
+
+        function drawScene() {
+            stage.removeChildren();
+
+            if (nodes.length === 0) return;
+
+            // draw edges
+            for (let i = 0; i < nodes.length; i++) {
+                const node1 = nodes[i];
+                const node2 = nodes[(i + 1) % nodes.length]; // connect last to first
+
+                const line = new PIXI.Graphics();
+                line.moveTo(node1.x, node1.y);
+                line.lineTo(node2.x, node2.y);
+                line.stroke({
+                    width: LINE_THICKNESS,
+                    // if selected, paint red, else paint blue
+                    color: (selectedEdge && selectedEdge.node1.id === node1.id && selectedEdge.node2.id === node2.id) ? 0xFF0000 : 0x007bff
+                });
+
+                // display distance next to edge
+                const distance = getDistance(node1, node2);
+                const formattedDistance = distance.toFixed(0) + " cm";
+
+                const midX = (node1.x + node2.x) / 2;
+                const midY = (node1.y + node2.y) / 2;
+
+                const distanceText = new PIXI.Text(formattedDistance, {
+                    fontFamily: "Arial",
+                    fontSize: 12,
+                    fill: 0x000000,
+                    stroke: 0xFFFFFF,
+                    strokeThickness: 3,
+                    align: "center"
+                });
+                distanceText.anchor.set(0.5);
+
+                // position text according to the angle
+                const angle = getAngle(node1, node2);
+                const offsetDistance = 15;
+                distanceText.x = midX - Math.sin(angle) * offsetDistance;
+                distanceText.y = midY + Math.cos(angle) * offsetDistance;
+                stage.addChild(distanceText);
+
+                // invisible wider edge for click detection
+                const hitAreaLine = new PIXI.Graphics();
+                hitAreaLine.moveTo(node1.x, node1.y);
+                hitAreaLine.lineTo(node2.x, node2.y);
+                hitAreaLine.stroke({
+                    width: LINE_THICKNESS + HIT_AREA_PADDING,
+                    color: 0x000000,
+                    alpha: 0
+                });
+                hitAreaLine.eventMode = "static";
+                hitAreaLine.on("pointerdown", (event) => {
+                    event.stopPropagation();
+                    selectEdge(node1, node2, line);
+                });
+
+                stage.addChild(line);
+                stage.addChild(hitAreaLine);
+            }
+
+            // draw nodes
+            nodes.forEach(node => {
+                const nodeGraphic = new PIXI.Graphics();
+                nodeGraphic.circle(0, 0, NODE_RADIUS);
+                nodeGraphic.stroke({
+                    width: 2,
+                    color: (selectedNode && selectedNode.id === node.id) ? 0xFF0000 : 0x000000
+                });
+                nodeGraphic.fill({
+                    color: 0xFFFFFF
+                });
+                nodeGraphic.x = node.x;
+                nodeGraphic.y = node.y;
+                nodeGraphic.eventMode = "static";
+
+                nodeGraphic.on("pointerdown", (event) => {
+                    event.stopPropagation();
+                    selectNode(node);
+                });
+                node.graphics = nodeGraphic;
+                stage.addChild(nodeGraphic);
+
+
+                const nodeIdText = new PIXI.Text(node.id.toString(), {
+                    fontFamily: "Arial",
+                    fontSize: 10,
+                    fill: 0x000000,
+                    align: "center"
+                });
+                nodeIdText.anchor.set(0.5);
+                nodeIdText.x = node.x;
+                nodeIdText.y = node.y;
+                nodeIdText.eventMode = "none";
+                stage.addChild(nodeIdText);
+            });
+        }
+
+
+        function deselectAll() {
+            selectedNode = null;
+            selectedEdge = null;
+            redraw();
+        }
+
+        function selectNode(node) {
+            deselectAll();
+            selectedNode = node;
+            redraw();
+        }
+
+        function selectEdge(node1, node2, graphics) {
+            deselectAll();
+            selectedEdge = {node1, node2, graphics};
+            redraw();
+        }
+
+        function redraw() {
+            updateUI();
+            drawScene();
+        }
+
+        // click on background to deselect
+        stage.on("pointerdown", deselectAll);
+
+        function updateUI() {
+            if (selectedNode) {
+                nodeControlsUI.classList.remove("hidden");
+                selectedNodeIdUI.textContent = selectedNode.id;
+
+                const nodeIndex = nodes.findIndex(n => n.id === selectedNode.id);
+                if (nodeIndex !== -1 && nodes.length > 1) {
+                    const nextNode = nodes[(nodeIndex + 1) % nodes.length];
+                    const currentAngleRad = getAngle(selectedNode, nextNode);
+                    nodeAngleInput.value = radiansToDegrees(currentAngleRad).toFixed(2);
+                } else {
+                    nodeAngleInput.value = "";
+                }
+
+            } else {
+                nodeControlsUI.classList.add("hidden");
+            }
+
+            if (selectedEdge) {
+                edgeControlsUI.classList.remove("hidden");
+                selectedEdgeNodesUI.textContent = `Node ${selectedEdge.node1.id} to Node ${selectedEdge.node2.id}`;
+                const distance = getDistance(selectedEdge.node1, selectedEdge.node2);
+                edgeDistanceInput.value = distance.toFixed(2);
+            } else {
+                edgeControlsUI.classList.add("hidden");
+            }
+        }
+
+
+        function handleAddNode() {
+            const newNodeId = nodeIdCounter++;
+            let x, y;
+
+            if (nodes.length === 0) {
+                // center of current view
+                const localCenter = stage.toLocal(new PIXI.Point(app.screen.width / 2, app.screen.height / 2));
+                x = localCenter.x;
+                y = localCenter.y;
+            } else if (nodes.length === 1) {
+                x = nodes[0].x + 100; // 100cm away
+                y = nodes[0].y;
+            } else {
+                const lastNode = nodes[nodes.length - 1];
+                const secondLastNode = nodes[nodes.length - 2];
+                // offset the same amount as second to last node
+                const dx = lastNode.x - secondLastNode.x;
+                const dy = lastNode.y - secondLastNode.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 100; // default if coincident
+                x = lastNode.x + (dx / dist) * 100;
+                y = lastNode.y + (dy / dist) * 100;
+            }
+
+            nodes.push({id: newNodeId, x, y});
+            selectNode(nodes[nodes.length - 1]); // select the new node
+        }
+
+        function handleRemoveNode() {
+            if (!selectedNode || nodes.length <= 3) {
+                alert("Cannot remove node. A polygon needs at least 3 nodes.");
+                return;
+            }
+            nodes = nodes.filter(n => n.id !== selectedNode.id);
+            deselectAll();
+        }
+
+        function handleSetEdgeDistance() {
+            if (!selectedEdge) return;
+            const newDistance = parseFloat(edgeDistanceInput.value);
+            if (isNaN(newDistance) || newDistance <= 0) {
+                alert("Please enter a valid positive distance.");
+                return;
+            }
+
+            const {node1, node2} = selectedEdge;
+
+            const currentDist = getDistance(node1, node2);
+            if (Math.abs(currentDist - newDistance) < 0.01) return; // no change
+
+            const dx = node2.x - node1.x;
+            const dy = node2.y - node1.y;
+
+            if (currentDist === 0) {
+                // nodes are coincident, move along x-axis
+                node2.x = node1.x + newDistance;
+                node2.y = node1.y;
+            } else {
+                const ratio = newDistance / currentDist;
+                node2.x = node1.x + dx * ratio;
+                node2.y = node1.y + dy * ratio;
+            }
+
+            const node2Index = nodes.findIndex(n => n.id === node2.id);
+            if (node2Index > -1) {
+                nodes[node2Index].x = node2.x;
+                nodes[node2Index].y = node2.y;
+            }
+
+            redraw();
+        }
+
+        function handleSetNodeAngle() {
+            // need at least 2 nodes for an angle
+            if (!selectedNode || nodes.length < 2) return;
+            const newAngleDegrees = parseFloat(nodeAngleInput.value);
+            if (isNaN(newAngleDegrees)) {
+                alert("Please enter a valid angle.");
+                return;
+            }
+            const newAngleRadians = degreesToRadians(newAngleDegrees);
+
+            const pivotNode = selectedNode;
+            const pivotNodeIndex = nodes.findIndex(n => n.id === pivotNode.id);
+            if (pivotNodeIndex === -1) return;
+
+            const nextNode = nodes[(pivotNodeIndex + 1) % nodes.length];
+
+            const distance = getDistance(pivotNode, nextNode);
+            if (distance === 0) {
+                // if coincident, give a default 100 cm distance
+                nextNode.x = pivotNode.x + 100 * Math.cos(newAngleRadians);
+                nextNode.y = pivotNode.y + 100 * Math.sin(newAngleRadians);
+            } else {
+                nextNode.x = pivotNode.x + distance * Math.cos(newAngleRadians);
+                nextNode.y = pivotNode.y + distance * Math.sin(newAngleRadians);
+            }
+
+            // Update actual node in array
+            const actualNextNodeIndex = nodes.findIndex(n => n.id === nextNode.id);
+            if (actualNextNodeIndex > -1) {
+                nodes[actualNextNodeIndex].x = nextNode.x;
+                nodes[actualNextNodeIndex].y = nextNode.y;
+            }
+
+            redraw();
+        }
+
+        // event listeners
+        addNodeBtn.addEventListener("click", handleAddNode);
+        removeNodeBtn.addEventListener("click", handleRemoveNode);
+        setEdgeDistanceBtn.addEventListener("click", handleSetEdgeDistance);
+        setNodeAngleBtn.addEventListener("click", handleSetNodeAngle);
+
+        let isPanning = false;
+        let lastPanPosition = null;
+
+        // zooming
+        app.canvas.addEventListener("wheel", (e) => {
+            e.preventDefault();
+            const scaleFactor = e.deltaY < 0 ? 1.2 : 0.83;
+            applyScale(scaleFactor, e.clientX, e.clientY);
+        });
+
+        function applyScale(scaleFactor, x, y) {
+            const worldPos = new PIXI.Point(
+                (x - stage.x) / stage.scale.x,
+                (y - stage.y) / stage.scale.y
+            );
+            const newScale = new PIXI.Point(
+                stage.scale.x * scaleFactor,
+                stage.scale.y * scaleFactor
+            );
+
+            // limit scale so user doesn"t lose the world
+            if (newScale.x >= 1.5 || newScale.x < 0.3 || newScale.y >= 1.5 || newScale.y < 0.3)
+                return;
+
+            // apply zoom, convert new world coordinates back to screen coordinates
+            let newScreenPos = new PIXI.Point(
+                (worldPos.x) * newScale.x + stage.x,
+                (worldPos.y) * newScale.y + stage.y
+            );
+
+            // adjust the difference after zooming based on pointer location
+            // (mouse pointer before zoom) - (after zoom)
+            stage.x += x - newScreenPos.x;
+            stage.y += y - newScreenPos.y;
+            stage.scale.x = newScale.x;
+            stage.scale.y = newScale.y;
+        }
+
+        // block right click menu
+        app.canvas.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+        });
+
+        // panning
+        stage.on("pointerdown", (e) => {
+            // right mouse button
+            if (e.data.button === 2) {
+                isPanning = true;
+                lastPanPosition = e.data.global.clone();
+                app.canvas.style.cursor = "grabbing";
+                e.stopPropagation();
+            }
+        });
+
+        stage.on("pointermove", (e) => {
+            if (isPanning) {
+                const newPos = e.data.global;
+                const dx = newPos.x - lastPanPosition.x;
+                const dy = newPos.y - lastPanPosition.y;
+                stage.x += dx;
+                stage.y += dy;
+                lastPanPosition = newPos.clone();
+            }
+        });
+
+        const onPointerUpOrLeave = () => {
+            if (isPanning) {
+                isPanning = false;
+                lastPanPosition = null;
+                app.canvas.style.cursor = "grab";
+            }
+        };
+        stage.on("pointerup", onPointerUpOrLeave);
+        stage.on("pointerupoutside", onPointerUpOrLeave);
+        stage.on("pointerout", onPointerUpOrLeave);
+
+        // initial room draw
+        drawScene();
+        updateUI();
+        handleAddNode();
+        handleAddNode();
+        handleAddNode();
+        nodes[1].y -= 100;
+        deselectAll();
+    })()
+</script>
+</body>
+</html>
