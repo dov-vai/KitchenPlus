@@ -14,7 +14,7 @@ public class Set {
 
     private String title;
 
-    @OneToOne
+    @ManyToOne
     private Client client;
 
     @OneToMany(mappedBy = "set", cascade = CascadeType.ALL, orphanRemoval = true)

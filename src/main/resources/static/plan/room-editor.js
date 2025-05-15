@@ -370,7 +370,11 @@ class RoomEditor {
         this.handleAddNode();
         this.handleAddNode();
         this.handleAddNode();
-        this.nodes[1].y -= 100;
+        this.handleAddNode();
+        this.nodes[1].y -= 300;
+        this.nodes[1].x -= 100;
+        this.nodes[2].y -= 300;
+        this.nodes[2].x += 100;
         this.deselectAll();
     }
 }

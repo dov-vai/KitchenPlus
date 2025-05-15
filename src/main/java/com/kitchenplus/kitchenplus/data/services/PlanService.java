@@ -19,7 +19,7 @@ public class PlanService {
         return planRepository.save(plan);
     }
 
-    public Optional<Plan> getById(Long id) {
+    public Optional<Plan> get(Long id) {
         return planRepository.findById(id);
     }
 

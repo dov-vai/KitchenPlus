@@ -1,0 +1,387 @@
+// TODO: kitchen triangle rule
+class FurnitureEditor {
+    constructor(app, containerElementId, planId, wallNodes, setItems) {
+        this.app = app;
+        this.containerElement = document.getElementById(containerElementId);
+        this.planId = planId;
+        this.wallNodes = wallNodes;
+        this.setItems = setItems;
+
+        this.furnitureItems = [];
+        this.selectedItem = null;
+        this.isDragging = false;
+        this.lastValidPosition = {x: 0, y: 0};
+
+        // FIXME: issues with collisions after you pan or zoom, perhaps just make it static
+        this.canvas = new DraggableCanvas(this.app);
+        this.app.stage.addChild(this.canvas);
+
+        this.initUIElements();
+
+        this.setupEventListeners();
+
+        this.drawRoom();
+
+        this.setupFurnitureList();
+    }
+
+    initUIElements() {
+        this.rotationSlider = document.getElementById('rotation-slider');
+        this.rotationValue = document.getElementById('rotation-value');
+        this.rotationPanel = document.getElementById('rotation-slider-panel');
+        this.selectedItemText = document.getElementById('selected-item');
+        this.positionInfo = document.getElementById('position-info');
+        this.saveButton = document.getElementById('save-btn');
+    }
+
+    drawRoom() {
+        const points = this.wallNodes.flatMap(wallNode => {
+            return [wallNode.x, wallNode.y];
+        });
+
+        this.room = new PIXI.Graphics();
+        this.room.poly(points);
+        this.room.fill({color: 0xB7C8F5});
+        this.canvas.addChild(this.room);
+
+        this.furnitureContainer = new PIXI.Container();
+        this.canvas.addChild(this.furnitureContainer);
+    }
+
+    setupEventListeners() {
+        // rotation slider events
+        this.rotationSlider.addEventListener('input', () => {
+            if (this.selectedItem) {
+                const rotation = parseInt(this.rotationSlider.value);
+                this.rotateItem(this.selectedItem, rotation);
+                this.rotationValue.textContent = `${rotation}°`;
+            }
+        });
+
+        // spacer button
+        document.getElementById('add-spacer').addEventListener('click', () => {
+            this.showSpacerDialog();
+        });
+
+        // save button
+        this.saveButton.addEventListener('click', () => {
+            this.savePlan();
+        });
+    }
+
+    setupFurnitureList() {
+        const furnitureListItems = document.querySelectorAll('.furniture-item');
+
+        furnitureListItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const width = parseInt(item.getAttribute('data-width'));
+                const height = parseInt(item.getAttribute('data-height'));
+                const id = parseInt(item.getAttribute('data-id'));
+                const name = item.querySelector('strong').textContent;
+
+                this.addFurnitureItem({
+                    id: id,
+                    name: name,
+                    width: width,
+                    height: height,
+                    // TODO: reproducible random colors
+                    color: 0x9EADF2
+                });
+            });
+        });
+    }
+
+    addFurnitureItem(itemData) {
+        const centerPosition = this.calculateRoomCenter();
+
+        const furniture = new PIXI.Graphics();
+        furniture.id = itemData.id || 0;
+        furniture.label = itemData.name;
+        furniture.rect(0, 0, itemData.width, itemData.height);
+        furniture.fill(itemData.color);
+
+        furniture.pivot.set(itemData.width / 2, itemData.height / 2);
+        furniture.position.set(centerPosition.x, centerPosition.y);
+        furniture.rotation = 0;
+
+        furniture.originalWidth = itemData.width;
+        furniture.originalHeight = itemData.height;
+
+        furniture.eventMode = 'static';
+        furniture.cursor = 'pointer';
+
+        this.setupDraggableItem(furniture);
+
+        if (!this.isInsideRoom(furniture)) {
+            alert(`${itemData.name} doesn't fit in the room.`);
+            return;
+        }
+
+        this.furnitureContainer.addChild(furniture);
+        this.furnitureItems.push(furniture);
+
+        this.selectItem(furniture);
+    }
+
+    setupDraggableItem(item) {
+        item
+            .on('pointerdown', this.onDragStart.bind(this, item))
+            .on('pointerup', this.onDragEnd.bind(this, item))
+            .on('pointerupoutside', this.onDragEnd.bind(this, item))
+            .on('pointermove', this.onDragMove.bind(this, item))
+            .on('click', () => this.selectItem(item));
+    }
+
+    onDragStart(item, event) {
+        if (!this.selectedItem || this.selectedItem !== item) {
+            this.selectItem(item);
+        }
+
+        this.isDragging = true;
+        item.alpha = 0.8;
+        item.dragging = true;
+
+        this.lastValidPosition = {x: item.x, y: item.y};
+    }
+
+    onDragEnd(item, event) {
+        this.isDragging = false;
+        item.alpha = 1;
+        item.dragging = false;
+
+        // if not inside room, revert
+        if (!this.isInsideRoom(item)) {
+            item.position.set(this.lastValidPosition.x, this.lastValidPosition.y);
+        }
+
+        this.updatePositionInfo(item);
+    }
+
+    onDragMove(item, event) {
+        if (item.dragging) {
+            const newPosition = event.global;
+            const localPos = this.furnitureContainer.toLocal(newPosition);
+
+            const oldX = item.x;
+            const oldY = item.y;
+
+            item.position.set(localPos.x, localPos.y);
+
+            if (this.checkCollision(item) || !this.isInsideRoom(item)) {
+                item.position.set(oldX, oldY);
+            } else {
+                this.lastValidPosition = {x: item.x, y: item.y};
+            }
+
+            this.updatePositionInfo(item);
+        }
+    }
+
+    selectItem(item) {
+        if (this.selectedItem) {
+            this.selectedItem.tint = 0xFFFFFF;
+        }
+
+        this.selectedItem = item;
+        this.selectedItem.tint = 0xFFCC00;
+
+        // update ui
+        this.rotationPanel.style.display = 'block';
+        this.rotationSlider.value = (item.rotation * 180 / Math.PI) % 360;
+        this.rotationValue.textContent = `${Math.round((item.rotation * 180 / Math.PI) % 360)}°`;
+        this.selectedItemText.textContent = `Selected: ${item.name}`;
+        this.updatePositionInfo(item);
+    }
+
+    updatePositionInfo(item) {
+        this.positionInfo.textContent = `Position: X: ${Math.round(item.x)} Y: ${Math.round(item.y)}`;
+    }
+
+    rotateItem(item, degrees) {
+        item.rotation = MathUtils.degreesToRadians(degrees);
+
+        if (!this.isInsideRoom(item) || this.checkCollision(item)) {
+            this.nudgeItemIntoRoom(item);
+        }
+    }
+
+    nudgeItemIntoRoom(item) {
+        const roomBounds = this.getRoomBounds();
+
+        const itemBounds = item.getBounds();
+
+        let xAdjust = 0;
+        let yAdjust = 0;
+
+        // x-axis adjustment
+        if (itemBounds.left < roomBounds.left) {
+            xAdjust = roomBounds.left - itemBounds.left;
+        } else if (itemBounds.right > roomBounds.right) {
+            xAdjust = roomBounds.right - itemBounds.right;
+        }
+
+        // y-axis adjustment
+        if (itemBounds.top < roomBounds.top) {
+            yAdjust = roomBounds.top - itemBounds.top;
+        } else if (itemBounds.bottom > roomBounds.bottom) {
+            yAdjust = roomBounds.bottom - itemBounds.bottom;
+        }
+
+        item.position.set(item.x + xAdjust, item.y + yAdjust);
+    }
+
+    // FIXME: collisions feel "sticky", makes it hard to move the object
+    checkCollision(item) {
+        for (const other of this.furnitureItems) {
+            // skip collision check with itself
+            if (other !== item) {
+                const itemBounds = item.getBounds();
+                const otherBounds = other.getBounds();
+
+                if (this.boundsIntersect(itemBounds, otherBounds)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    boundsIntersect(bounds1, bounds2) {
+        return !(
+            bounds1.right < bounds2.left ||
+            bounds1.left > bounds2.right ||
+            bounds1.bottom < bounds2.top ||
+            bounds1.top > bounds2.bottom
+        );
+    }
+
+    isInsideRoom(item) {
+        const itemBounds = item.getBounds();
+
+        const itemPoints = [
+            {x: itemBounds.left, y: itemBounds.top},
+            {x: itemBounds.right, y: itemBounds.top},
+            {x: itemBounds.right, y: itemBounds.bottom},
+            {x: itemBounds.left, y: itemBounds.bottom}
+        ];
+
+        for (const point of itemPoints) {
+            if (!this.isPointInPolygon(point, this.wallNodes)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    isPointInPolygon(point, polygon) {
+        // ray casting (even-odd) algorithm
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const xi = polygon[i].x;
+            const yi = polygon[i].y;
+            const xj = polygon[j].x;
+            const yj = polygon[j].y;
+
+            const intersect = ((yi > point.y) !== (yj > point.y)) &&
+                (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
+
+            if (intersect) inside = !inside;
+        }
+
+        return inside;
+    }
+
+    getRoomBounds() {
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        for (const node of this.wallNodes) {
+            minX = Math.min(minX, node.x);
+            minY = Math.min(minY, node.y);
+            maxX = Math.max(maxX, node.x);
+            maxY = Math.max(maxY, node.y);
+        }
+
+        return {
+            left: minX,
+            top: minY,
+            right: maxX,
+            bottom: maxY
+        };
+    }
+
+    calculateRoomCenter() {
+        const bounds = this.getRoomBounds();
+        return {
+            x: (bounds.left + bounds.right) / 2,
+            y: (bounds.top + bounds.bottom) / 2
+        };
+    }
+
+    showSpacerDialog() {
+        const width = parseInt(prompt("Enter spacer width (cm):", "50"));
+        const height = parseInt(prompt("Enter spacer height (cm):", "50"));
+
+        if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+            alert("Please enter valid positive dimensions for the spacer.");
+            return;
+        }
+
+        this.addFurnitureItem({
+            name: "Spacer",
+            width: width,
+            height: height,
+            color: 0xFF0000
+        });
+    }
+
+    async savePlan() {
+        const spacers = this.furnitureItems.map(item => {
+            if (item.label === "Spacer") {
+                return {
+                    x: item.x,
+                    y: item.y,
+                    angle: Math.round(item.rotation),
+                    width: item.originalWidth,
+                    height: item.originalHeight
+                };
+            }
+        })
+
+        const items = this.furnitureItems.map(item => {
+            if (item.label !== "Spacer") {
+                return {
+                    id: item.id,
+                    x: item.x,
+                    y: item.y,
+                    angle: Math.round(item.rotation)
+                }
+            }
+        })
+
+        try {
+            const response = await fetch(`/plans/edit/${this.planId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    spacers,
+                    items
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                window.location.href = data.redirect;
+            }
+        } catch (error) {
+            console.error("Error saving plan:", error);
+            alert("An error occurred while saving furniture plan.");
+        }
+
+    }
+}
