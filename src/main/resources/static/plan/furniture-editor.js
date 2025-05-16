@@ -1,4 +1,3 @@
-// TODO: kitchen triangle rule
 class FurnitureEditor {
     constructor(app, containerElementId, planId, wallNodes, spacerNodes, itemNodes, setItems) {
         this.app = app;
@@ -37,6 +36,7 @@ class FurnitureEditor {
         this.positionInfo = document.getElementById('position-info');
         this.saveButton = document.getElementById('save-btn');
         this.deletionButton = document.getElementById('deletion-btn');
+        this.triangleAlert = document.getElementById('triangle-alert');
     }
 
     drawRoom() {
@@ -53,7 +53,7 @@ class FurnitureEditor {
         this.canvas.addChild(this.furnitureContainer);
     }
 
-    drawObjects(){
+    drawObjects() {
         this.itemNodes.forEach(item => {
             const itemInfo = this.setItems.find(x => x.id === item.id);
 
@@ -164,12 +164,14 @@ class FurnitureEditor {
         furniture.cursor = 'pointer';
 
         // Add text label
-        const label = new PIXI.Text({text: furniture.name, style: {
+        const label = new PIXI.Text({
+            text: furniture.name, style: {
                 fontFamily: 'Arial',
                 fontSize: 8,
                 fill: 0x000000,
                 align: 'center',
-            }});
+            }
+        });
 
         label.anchor.set(0.5);
         label.position.set(itemData.width / 2, itemData.height / 2);
@@ -202,6 +204,9 @@ class FurnitureEditor {
             this.selectItem(item);
         }
 
+        this.triangleAlert.textContent = "";
+        this.triangleAlert.style.display = 'none';
+
         this.isDragging = true;
         item.alpha = 0.8;
         item.dragging = true;
@@ -220,6 +225,24 @@ class FurnitureEditor {
         }
 
         this.updatePositionInfo(item);
+
+        const triangleCheck = this.checkKitchenTriangle();
+        if (!triangleCheck.valid) {
+            this.showTriangleIssues(triangleCheck.issues);
+        }
+    }
+
+    showTriangleIssues(issues) {
+        let html = "Kitchen triangle violations: <ul>";
+
+        for (const issue of issues) {
+            html += `<li>${issue}</li>`
+        }
+
+        html += "</ul>";
+
+        this.triangleAlert.innerHTML = html;
+        this.triangleAlert.style.display = 'block';
     }
 
     onDragMove(item, event) {
@@ -309,6 +332,99 @@ class FurnitureEditor {
             }
         }
         return false;
+    }
+
+    // heuristic algorithm for checking kitchen triangle rule
+    checkKitchenTriangle() {
+        const fridge = this.furnitureItems.find(item => {
+            const label = item.label.toLowerCase();
+
+            return label.indexOf("fridge") !== -1 ||
+                label.indexOf("refrigerator") !== -1;
+        });
+        if (!fridge) {
+            return {valid: true};
+        }
+
+        const stove = this.furnitureItems.find(item => {
+                const label = item.label.toLowerCase();
+                return label.indexOf("stove") !== -1 ||
+                    label.indexOf("range") !== -1 ||
+                    label.indexOf("cooktop") !== -1
+            }
+        );
+        if (!stove) {
+            return {valid: true};
+        }
+
+        const sink = this.furnitureItems.find(item => item.label.toLowerCase().indexOf("sink") !== -1);
+        if (!sink) {
+            return {valid: true};
+        }
+
+        const fridgeCenter = {
+            x: fridge.x + fridge.width / 2,
+            y: fridge.y + fridge.height / 2
+        };
+        const stoveCenter = {
+            x: stove.x + stove.width / 2,
+            y: stove.y + stove.height / 2
+        };
+        const sinkCenter = {
+            x: sink.x + sink.width / 2,
+            y: sink.y + sink.height / 2
+        };
+
+        const fridgeToStove = MathUtils.getDistance(fridgeCenter, stoveCenter);
+        const fridgeToSink = MathUtils.getDistance(fridgeCenter, sinkCenter);
+        const stoveToSink = MathUtils.getDistance(stoveCenter, sinkCenter);
+
+        const perimeter = fridgeToStove + fridgeToSink + stoveToSink;
+
+        // source: https://en.wikipedia.org/wiki/Kitchen_work_triangle#Application
+        const minLegDistance = 120;
+        const maxLegDistance = 270;
+        const minPerimeter = 400;
+        const maxPerimeter = 800;
+
+        const issues = [];
+
+        // check each triangle leg distance
+        if (fridgeToStove < minLegDistance) {
+            issues.push(`Refrigerator to stove distance (${fridgeToStove.toFixed(1)}) is too small (min: ${minLegDistance})`);
+        } else if (fridgeToStove > maxLegDistance) {
+            issues.push(`Refrigerator to stove distance (${fridgeToStove.toFixed(1)}) is too large (max: ${maxLegDistance})`);
+        }
+
+        if (fridgeToSink < minLegDistance) {
+            issues.push(`Refrigerator to sink distance (${fridgeToSink.toFixed(1)}) is too small (min: ${minLegDistance})`);
+        } else if (fridgeToSink > maxLegDistance) {
+            issues.push(`Refrigerator to sink distance (${fridgeToSink.toFixed(1)}) is too large (max: ${maxLegDistance})`);
+        }
+
+        if (stoveToSink < minLegDistance) {
+            issues.push(`Stove to sink distance (${stoveToSink.toFixed(1)}) is too small (min: ${minLegDistance})`);
+        } else if (stoveToSink > maxLegDistance) {
+            issues.push(`Stove to sink distance (${stoveToSink.toFixed(1)}) is too large (max: ${maxLegDistance})`);
+        }
+
+        // check triangle perimeter
+        if (perimeter < minPerimeter) {
+            issues.push(`Triangle perimeter (${perimeter.toFixed(1)}) is too small (min: ${minPerimeter})`);
+        } else if (perimeter > maxPerimeter) {
+            issues.push(`Triangle perimeter (${perimeter.toFixed(1)}) is too large (max: ${maxPerimeter})`);
+        }
+
+        return {
+            valid: issues.length === 0,
+            issues,
+            measurements: {
+                fridgeToStove,
+                fridgeToSink,
+                stoveToSink,
+                perimeter
+            }
+        };
     }
 
     boundsIntersect(bounds1, bounds2) {
