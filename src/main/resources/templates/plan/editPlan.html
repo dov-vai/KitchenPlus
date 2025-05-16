@@ -107,6 +107,7 @@
 <script src="https://pixijs.download/v8.9.2/pixi.js"></script>
 <script src="/plan/math-utils.js"></script>
 <script src="/plan/draggable-canvas.js"></script>
+<script src="/plan/plan-viewer.js"></script>
 <script src="/plan/furniture-editor.js"></script>
 <script th:inline="javascript">
     const spacerNodes = [[${spacerNodes}]];
@@ -128,7 +129,7 @@
 
         document.getElementById("pixi-container").appendChild(app.canvas);
 
-        const furnitureEditor = new FurnitureEditor(app, "pixi-container", planId, wallNodes, spacerNodes, itemNodes, setItems);
+        const furnitureEditor = new FurnitureEditor(app, wallNodes, spacerNodes, itemNodes, setItems, planId);
     }
 
     initializeApp();

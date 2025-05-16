@@ -65,10 +65,8 @@ class PlanViewer {
         return parseInt(color, 16);
     }
 
-    addFurnitureItem(itemData) {
+    createFurnitureItem(itemData){
         const furniture = new PIXI.Graphics();
-        furniture.id = itemData.id || -1;
-        furniture.label = itemData.name;
         furniture.rect(0, 0, itemData.width, itemData.height);
         furniture.fill(itemData.color);
 
@@ -76,15 +74,9 @@ class PlanViewer {
         furniture.position.set(itemData.x, itemData.y);
         furniture.rotation = itemData.angle || 0;
 
-        furniture.originalWidth = itemData.width;
-        furniture.originalHeight = itemData.height;
-
-        furniture.eventMode = 'static';
-        furniture.cursor = 'pointer';
-
         // Add text label
         const label = new PIXI.Text({
-            text: furniture.name, style: {
+            text: itemData.name, style: {
                 fontFamily: 'Arial',
                 fontSize: 8,
                 fill: 0x000000,
@@ -95,6 +87,12 @@ class PlanViewer {
         label.anchor.set(0.5);
         label.position.set(itemData.width / 2, itemData.height / 2);
         furniture.addChild(label);
+
+        return furniture;
+    }
+
+    addFurnitureItem(itemData) {
+        const furniture = this.createFurnitureItem(itemData);
 
         this.furnitureContainer.addChild(furniture);
     }

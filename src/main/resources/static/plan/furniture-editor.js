@@ -1,31 +1,29 @@
-class FurnitureEditor {
-    constructor(app, containerElementId, planId, wallNodes, spacerNodes, itemNodes, setItems) {
-        this.app = app;
-        this.containerElement = document.getElementById(containerElementId);
-        this.planId = planId;
-        this.spacerNodes = spacerNodes;
-        this.itemNodes = itemNodes;
-        this.wallNodes = wallNodes;
-        this.setItems = setItems;
-        this.SPACER_COLOR = 0xdc3545;
+class FurnitureEditor extends PlanViewer {
+    constructor(app, wallNodes, spacerNodes, itemNodes, setItems, planId) {
+        super(app, wallNodes, spacerNodes, itemNodes, setItems);
 
+        this.planId = planId;
         this.furnitureItems = [];
         this.selectedItem = null;
         this.isDragging = false;
         this.lastValidPosition = {x: 0, y: 0};
 
-        this.canvas = new DraggableCanvas(this.app);
-        this.app.stage.addChild(this.canvas);
-
         this.initUIElements();
-
-        this.setupEventListeners();
-
-        this.drawRoom();
-
-        this.setupFurnitureList();
-
         this.drawObjects();
+        this.setupEventListeners();
+        this.setupFurnitureList();
+    }
+
+    // defer drawObjects(), PlanViewer calls it
+    // but it's doing so before furnitureItems is initialized
+    // overridden addFurnitureItem is using that list
+    // this does seem like a code smell, but I'm not sure how to fix it yet
+    drawObjects() {
+        if (!this.furnitureItems) {
+            return;
+        }
+
+        super.drawObjects();
     }
 
     initUIElements() {
@@ -37,57 +35,6 @@ class FurnitureEditor {
         this.saveButton = document.getElementById('save-btn');
         this.deletionButton = document.getElementById('deletion-btn');
         this.triangleAlert = document.getElementById('triangle-alert');
-    }
-
-    drawRoom() {
-        const points = this.wallNodes.flatMap(wallNode => {
-            return [wallNode.x, wallNode.y];
-        });
-
-        this.room = new PIXI.Graphics();
-        this.room.poly(points);
-        this.room.fill({color: 0xB7C8F5});
-        this.canvas.addChild(this.room);
-
-        this.furnitureContainer = new PIXI.Container();
-        this.canvas.addChild(this.furnitureContainer);
-    }
-
-    drawObjects() {
-        this.itemNodes.forEach(item => {
-            const itemInfo = this.setItems.find(x => x.id === item.id);
-
-            this.addFurnitureItem({
-                ...item,
-                name: itemInfo.name,
-                height: itemInfo.height,
-                width: itemInfo.width,
-                color: this.stringToColor(itemInfo.name)
-            })
-        });
-
-        this.spacerNodes.forEach(item => {
-            this.addFurnitureItem({
-                ...item,
-                name: "Spacer",
-                color: this.SPACER_COLOR
-            })
-        });
-    }
-
-    stringToColor(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
-
-        let color = Math.abs(hash).toString(16);
-        color = color.substring(0, 6);
-        while (color.length < 6) {
-            color = '0' + color;
-        }
-
-        return parseInt(color, 16);
     }
 
     setupEventListeners() {
@@ -147,35 +94,13 @@ class FurnitureEditor {
     }
 
     addFurnitureItem(itemData) {
-        const furniture = new PIXI.Graphics();
+        const furniture = this.createFurnitureItem(itemData);
         furniture.id = itemData.id || -1;
         furniture.label = itemData.name;
-        furniture.rect(0, 0, itemData.width, itemData.height);
-        furniture.fill(itemData.color);
-
-        furniture.pivot.set(itemData.width / 2, itemData.height / 2);
-        furniture.position.set(itemData.x, itemData.y);
-        furniture.rotation = itemData.angle || 0;
-
         furniture.originalWidth = itemData.width;
         furniture.originalHeight = itemData.height;
-
         furniture.eventMode = 'static';
         furniture.cursor = 'pointer';
-
-        // Add text label
-        const label = new PIXI.Text({
-            text: furniture.name, style: {
-                fontFamily: 'Arial',
-                fontSize: 8,
-                fill: 0x000000,
-                align: 'center',
-            }
-        });
-
-        label.anchor.set(0.5);
-        label.position.set(itemData.width / 2, itemData.height / 2);
-        furniture.addChild(label);
 
         this.setupDraggableItem(furniture);
 
