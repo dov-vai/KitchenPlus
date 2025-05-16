@@ -8,6 +8,7 @@ class FurnitureEditor {
         this.itemNodes = itemNodes;
         this.wallNodes = wallNodes;
         this.setItems = setItems;
+        this.SPACER_COLOR = 0xdc3545;
 
         this.furnitureItems = [];
         this.selectedItem = null;
@@ -53,19 +54,15 @@ class FurnitureEditor {
     }
 
     drawObjects(){
-        // the saved coordinates should maybe be local to the polygon to be better reproducible after panning
-
         this.itemNodes.forEach(item => {
             const itemInfo = this.setItems.find(x => x.id === item.id);
-
-            console.log(itemInfo.name);
 
             this.addFurnitureItem({
                 ...item,
                 name: itemInfo.name,
                 height: itemInfo.height,
                 width: itemInfo.width,
-                color: 0x9EADF2
+                color: this.stringToColor(itemInfo.name)
             })
         });
 
@@ -73,9 +70,24 @@ class FurnitureEditor {
             this.addFurnitureItem({
                 ...item,
                 name: "Spacer",
-                color: 0xFF0000
+                color: this.SPACER_COLOR
             })
         });
+    }
+
+    stringToColor(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+
+        let color = Math.abs(hash).toString(16);
+        color = color.substring(0, 6);
+        while (color.length < 6) {
+            color = '0' + color;
+        }
+
+        return parseInt(color, 16);
     }
 
     setupEventListeners() {
@@ -128,8 +140,7 @@ class FurnitureEditor {
                     name: name,
                     width: width,
                     height: height,
-                    // TODO: reproducible random colors
-                    color: 0x9EADF2
+                    color: this.stringToColor(name)
                 });
             });
         });
@@ -151,6 +162,18 @@ class FurnitureEditor {
 
         furniture.eventMode = 'static';
         furniture.cursor = 'pointer';
+
+        // Add text label
+        const label = new PIXI.Text({text: furniture.name, style: {
+                fontFamily: 'Arial',
+                fontSize: 8,
+                fill: 0x000000,
+                align: 'center',
+            }});
+
+        label.anchor.set(0.5);
+        label.position.set(itemData.width / 2, itemData.height / 2);
+        furniture.addChild(label);
 
         this.setupDraggableItem(furniture);
 
@@ -373,7 +396,7 @@ class FurnitureEditor {
             name: "Spacer",
             width: width,
             height: height,
-            color: 0xFF0000
+            color: this.SPACER_COLOR
         });
     }
 
