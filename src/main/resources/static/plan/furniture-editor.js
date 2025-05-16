@@ -35,6 +35,7 @@ class FurnitureEditor {
         this.selectedItemText = document.getElementById('selected-item');
         this.positionInfo = document.getElementById('position-info');
         this.saveButton = document.getElementById('save-btn');
+        this.deletionButton = document.getElementById('deletion-btn');
     }
 
     drawRoom() {
@@ -96,6 +97,17 @@ class FurnitureEditor {
         this.saveButton.addEventListener('click', () => {
             this.savePlan();
         });
+
+        this.deletionButton.addEventListener('click', () => {
+            this.deleteObject();
+        })
+    }
+
+    deleteObject() {
+        this.furnitureContainer.removeChild(this.selectedItem);
+        this.furnitureItems = this.furnitureItems.filter(item => item !== this.selectedItem);
+        this.selectedItem = null;
+        this.rotationPanel.style.display = 'none';
     }
 
     setupFurnitureList() {
@@ -125,7 +137,7 @@ class FurnitureEditor {
 
     addFurnitureItem(itemData) {
         const furniture = new PIXI.Graphics();
-        furniture.id = itemData.id || 0;
+        furniture.id = itemData.id || -1;
         furniture.label = itemData.name;
         furniture.rect(0, 0, itemData.width, itemData.height);
         furniture.fill(itemData.color);
