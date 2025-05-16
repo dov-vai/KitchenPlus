@@ -75,48 +75,13 @@ public class PlanController {
 
     @GetMapping("/view/{planId}")
     public String viewPlan(@PathVariable Long planId, Model model) {
-        var plan = planService.get(planId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid plan ID: " + planId));
-
-        model.addAttribute("plan", plan);
-
+        populatePlanModel(planId, model);
         return "plan/viewPlan";
     }
 
     @GetMapping("/edit/{planId}")
     public String editPlan(@PathVariable Long planId, Model model) {
-        var plan = planService.get(planId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid plan ID: " + planId));
-
-        List<WallNodeDto> wallNodes = plan.getNodes().stream()
-                .filter(node -> node instanceof WallNode)
-                .map(node -> new WallNodeDto(node.getId(), node.getX(), node.getY()))
-                .toList();
-
-        List<SpacerNodeDto> spacerNodes = plan.getNodes().stream()
-                .filter(node -> node instanceof SpacerNode)
-                .map(node -> (SpacerNode) node)
-                .map(node -> new SpacerNodeDto(node.getX(), node.getY(), node.getAngle(), node.getWidth(), node.getHeight()))
-                .toList();
-
-        List<ItemNodeDto> itemNodes = plan.getNodes().stream()
-                .filter(node -> node instanceof ItemNode)
-                .map(node -> (ItemNode) node)
-                .map(node -> new ItemNodeDto(node.getItem().getId(), node.getX(), node.getY(), node.getAngle()))
-                .toList();
-
-        List<SetItemDto> setItems = plan.getSet().getItems().stream()
-                .map(setItem -> {
-                    var item = setItem.getItem();
-                    return new SetItemDto(setItem.getId(), item.getId(), item.getName(), item.getDescription(), item.getPrice(), item.getHeight(), item.getWidth(), item.getFirstImageLink());
-                }).toList();
-
-        model.addAttribute("plan", plan);
-        model.addAttribute("spacerNodes", spacerNodes);
-        model.addAttribute("itemNodes", itemNodes);
-        model.addAttribute("wallNodes", wallNodes);
-        model.addAttribute("setItems", setItems);
-
+        populatePlanModel(planId, model);
         return "plan/editPlan";
     }
 
@@ -165,5 +130,39 @@ public class PlanController {
         response.put("redirect", "/plans/view/" + planId);
 
         return response;
+    }
+
+    private void populatePlanModel(Long planId, Model model) {
+        var plan = planService.get(planId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid plan ID: " + planId));
+
+        List<WallNodeDto> wallNodes = plan.getNodes().stream()
+                .filter(node -> node instanceof WallNode)
+                .map(node -> new WallNodeDto(node.getId(), node.getX(), node.getY()))
+                .toList();
+
+        List<SpacerNodeDto> spacerNodes = plan.getNodes().stream()
+                .filter(node -> node instanceof SpacerNode)
+                .map(node -> (SpacerNode) node)
+                .map(node -> new SpacerNodeDto(node.getX(), node.getY(), node.getAngle(), node.getWidth(), node.getHeight()))
+                .toList();
+
+        List<ItemNodeDto> itemNodes = plan.getNodes().stream()
+                .filter(node -> node instanceof ItemNode)
+                .map(node -> (ItemNode) node)
+                .map(node -> new ItemNodeDto(node.getItem().getId(), node.getX(), node.getY(), node.getAngle()))
+                .toList();
+
+        List<SetItemDto> setItems = plan.getSet().getItems().stream()
+                .map(setItem -> {
+                    var item = setItem.getItem();
+                    return new SetItemDto(setItem.getId(), item.getId(), item.getName(), item.getDescription(), item.getPrice(), item.getHeight(), item.getWidth(), item.getFirstImageLink());
+                }).toList();
+
+        model.addAttribute("plan", plan);
+        model.addAttribute("spacerNodes", spacerNodes);
+        model.addAttribute("itemNodes", itemNodes);
+        model.addAttribute("wallNodes", wallNodes);
+        model.addAttribute("setItems", setItems);
     }
 }
