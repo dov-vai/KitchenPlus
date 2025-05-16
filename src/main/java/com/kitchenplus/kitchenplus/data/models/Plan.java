@@ -45,4 +45,25 @@ public class Plan {
         node.setPlan(this);
         this.nodes.add(node);
     }
+
+    public void removeNode(Node node) {
+        node.setPlan(null);
+        this.nodes.remove(node);
+    }
+
+    public void clearItemNodes() {
+        for (Node node : new ArrayList<>(this.nodes)) {
+            if (node instanceof ItemNode){
+                removeNode(node);
+            }
+        }
+    }
+
+    public void clearSpacerNodes(){
+        for (Node node : new ArrayList<>(this.nodes)) {
+            if (node instanceof SpacerNode){
+                removeNode(node);
+            }
+        }
+    }
 }

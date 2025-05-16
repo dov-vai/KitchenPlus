@@ -2,12 +2,12 @@ package com.kitchenplus.kitchenplus.data.models;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 @DiscriminatorValue("ITEM")
 public class ItemNode extends Node {
-    @OneToOne
+    @ManyToOne
     private SetItem item;
 
     private int angle;

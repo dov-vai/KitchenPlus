@@ -1,9 +1,11 @@
 // TODO: kitchen triangle rule
 class FurnitureEditor {
-    constructor(app, containerElementId, planId, wallNodes, setItems) {
+    constructor(app, containerElementId, planId, wallNodes, spacerNodes, itemNodes, setItems) {
         this.app = app;
         this.containerElement = document.getElementById(containerElementId);
         this.planId = planId;
+        this.spacerNodes = spacerNodes;
+        this.itemNodes = itemNodes;
         this.wallNodes = wallNodes;
         this.setItems = setItems;
 
@@ -22,6 +24,8 @@ class FurnitureEditor {
         this.drawRoom();
 
         this.setupFurnitureList();
+
+        this.drawObjects();
     }
 
     initUIElements() {
@@ -45,6 +49,32 @@ class FurnitureEditor {
 
         this.furnitureContainer = new PIXI.Container();
         this.canvas.addChild(this.furnitureContainer);
+    }
+
+    drawObjects(){
+        // the saved coordinates should maybe be local to the polygon to be better reproducible after panning
+
+        this.itemNodes.forEach(item => {
+            const itemInfo = this.setItems.find(x => x.id === item.id);
+
+            console.log(itemInfo.name);
+
+            this.addFurnitureItem({
+                ...item,
+                name: itemInfo.name,
+                height: itemInfo.height,
+                width: itemInfo.width,
+                color: 0x9EADF2
+            })
+        });
+
+        this.spacerNodes.forEach(item => {
+            this.addFurnitureItem({
+                ...item,
+                name: "Spacer",
+                color: 0xFF0000
+            })
+        });
     }
 
     setupEventListeners() {
@@ -77,8 +107,11 @@ class FurnitureEditor {
                 const height = parseInt(item.getAttribute('data-height'));
                 const id = parseInt(item.getAttribute('data-id'));
                 const name = item.querySelector('strong').textContent;
+                const centerPosition = this.calculateRoomCenter();
 
                 this.addFurnitureItem({
+                    x: centerPosition.x,
+                    y: centerPosition.y,
                     id: id,
                     name: name,
                     width: width,
@@ -91,8 +124,6 @@ class FurnitureEditor {
     }
 
     addFurnitureItem(itemData) {
-        const centerPosition = this.calculateRoomCenter();
-
         const furniture = new PIXI.Graphics();
         furniture.id = itemData.id || 0;
         furniture.label = itemData.name;
@@ -100,8 +131,8 @@ class FurnitureEditor {
         furniture.fill(itemData.color);
 
         furniture.pivot.set(itemData.width / 2, itemData.height / 2);
-        furniture.position.set(centerPosition.x, centerPosition.y);
-        furniture.rotation = 0;
+        furniture.position.set(itemData.x, itemData.y);
+        furniture.rotation = itemData.angle || 0;
 
         furniture.originalWidth = itemData.width;
         furniture.originalHeight = itemData.height;
@@ -322,7 +353,11 @@ class FurnitureEditor {
             return;
         }
 
+        const centerPosition = this.calculateRoomCenter();
+
         this.addFurnitureItem({
+            x: centerPosition.x,
+            y: centerPosition.y,
             name: "Spacer",
             width: width,
             height: height,

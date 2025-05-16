@@ -88,9 +88,21 @@ public class PlanController {
         var plan = planService.get(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plan ID: " + planId));
 
-        List<NodeDto> wallNodes = plan.getNodes().stream()
+        List<WallNodeDto> wallNodes = plan.getNodes().stream()
                 .filter(node -> node instanceof WallNode)
-                .map(node -> new NodeDto(node.getId(), node.getX(), node.getY()))
+                .map(node -> new WallNodeDto(node.getId(), node.getX(), node.getY()))
+                .toList();
+
+        List<SpacerNodeDto> spacerNodes = plan.getNodes().stream()
+                .filter(node -> node instanceof SpacerNode)
+                .map(node -> (SpacerNode) node)
+                .map(node -> new SpacerNodeDto(node.getX(), node.getY(), node.getAngle(), node.getWidth(), node.getHeight()))
+                .toList();
+
+        List<ItemNodeDto> itemNodes = plan.getNodes().stream()
+                .filter(node -> node instanceof ItemNode)
+                .map(node -> (ItemNode) node)
+                .map(node -> new ItemNodeDto(node.getItem().getId(), node.getX(), node.getY(), node.getAngle()))
                 .toList();
 
         List<SetItemDto> setItems = plan.getSet().getItems().stream()
@@ -100,6 +112,8 @@ public class PlanController {
                 }).toList();
 
         model.addAttribute("plan", plan);
+        model.addAttribute("spacerNodes", spacerNodes);
+        model.addAttribute("itemNodes", itemNodes);
         model.addAttribute("wallNodes", wallNodes);
         model.addAttribute("setItems", setItems);
 
@@ -111,6 +125,10 @@ public class PlanController {
     public Map<String, Object> editPlan(@PathVariable Long planId, @RequestBody PlanDataDto planDataDto) {
         var plan = planService.get(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plan ID: " + planId));
+
+        // clear for updates
+        plan.clearSpacerNodes();
+        plan.clearItemNodes();
 
         for (SpacerNodeDto spacer : planDataDto.spacers()) {
             if (spacer == null) {

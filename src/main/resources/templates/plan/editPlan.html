@@ -105,6 +105,8 @@
 <script src="/plan/draggable-canvas.js"></script>
 <script src="/plan/furniture-editor.js"></script>
 <script th:inline="javascript">
+    const spacerNodes = [[${spacerNodes}]];
+    const itemNodes = [[${itemNodes}]];
     const wallNodes = [[${wallNodes}]];
     const setItems = [[${setItems}]];
     const planId = [[${plan.id}]];
@@ -122,7 +124,7 @@
 
         document.getElementById("pixi-container").appendChild(app.canvas);
 
-        const furnitureEditor = new FurnitureEditor(app, "pixi-container", planId, wallNodes, setItems);
+        const furnitureEditor = new FurnitureEditor(app, "pixi-container", planId, wallNodes, spacerNodes, itemNodes, setItems);
     }
 
     initializeApp();

@@ -1,6 +1,6 @@
 package com.kitchenplus.kitchenplus.dtos;
 
-public record NodeDto(
+public record WallNodeDto(
         Long id,
         double x,
         double y
