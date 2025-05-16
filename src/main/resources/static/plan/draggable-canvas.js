@@ -2,6 +2,7 @@ class DraggableCanvas extends PIXI.Container {
     constructor(app, options = {}) {
         super();
         this.app = app;
+        this.eventElement = this.app.renderer.events.domElement;
 
         this.options = {
             minScale: 0.3,
@@ -14,9 +15,6 @@ class DraggableCanvas extends PIXI.Container {
     }
 
     setupCanvas() {
-        this.eventMode = "static";
-        this.hitArea = this.app.screen;
-
         this.isPanning = false;
         this.lastPanPosition = null;
 
@@ -24,15 +22,10 @@ class DraggableCanvas extends PIXI.Container {
         this.setupPanning();
 
         this.app.canvas.style.cursor = "grab";
-
-        // block right click menu
-        this.app.canvas.addEventListener("contextmenu", (e) => {
-            e.preventDefault();
-        });
     }
 
     setupZooming() {
-        this.app.canvas.addEventListener("wheel", (e) => {
+        this.eventElement.addEventListener("wheel", (e) => {
             e.preventDefault();
             const scaleFactor = e.deltaY < 0 ? this.options.zoomFactor : 1 / this.options.zoomFactor;
             this.applyScale(scaleFactor, e.clientX, e.clientY);
@@ -73,31 +66,29 @@ class DraggableCanvas extends PIXI.Container {
     }
 
     setupPanning() {
-        this.on("pointerdown", this.onPointerDown.bind(this));
-        this.on("pointermove", this.onPointerMove.bind(this));
-        this.on("pointerup", this.onPointerUpOrLeave.bind(this));
-        this.on("pointerupoutside", this.onPointerUpOrLeave.bind(this));
-        this.on("pointerout", this.onPointerUpOrLeave.bind(this));
+        this.eventElement.addEventListener("contextmenu", this.onPointerDown.bind(this));
+        this.eventElement.addEventListener("pointermove", this.onPointerMove.bind(this));
+        this.eventElement.addEventListener("pointerup", this.onPointerUpOrLeave.bind(this));
+        this.eventElement.addEventListener("pointerupoutside", this.onPointerUpOrLeave.bind(this));
+        this.eventElement.addEventListener("pointerout", this.onPointerUpOrLeave.bind(this));
     }
 
     onPointerDown(e) {
-        // right mouse button
-        if (e.data.button === 2) {
-            this.isPanning = true;
-            this.lastPanPosition = e.data.global.clone();
-            this.app.canvas.style.cursor = "grabbing";
-            e.stopPropagation();
-        }
+        e.preventDefault();
+
+        this.isPanning = true;
+        this.lastPanPosition = {x: e.clientX, y: e.clientY};
+        this.app.canvas.style.cursor = "grabbing";
     }
 
     onPointerMove(e) {
         if (this.isPanning) {
-            const newPos = e.data.global;
+            const newPos = {x: e.clientX, y: e.clientY};
             const dx = newPos.x - this.lastPanPosition.x;
             const dy = newPos.y - this.lastPanPosition.y;
             this.x += dx;
             this.y += dy;
-            this.lastPanPosition = newPos.clone();
+            this.lastPanPosition = {...newPos};
         }
     }
 
