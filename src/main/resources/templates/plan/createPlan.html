@@ -3,17 +3,10 @@
 <div th:replace="~{fragments/head :: head(title='Create Plan')}"></div>
 <head>
     <style>
-        body {
-            margin: 0;
-            display: flex;
-            flex-direction: row;
-            height: 100vh;
-        }
-
         #pixi-container {
-            flex-grow: 1;
             border: 1px solid #ccc;
-            cursor: grab;
+            overflow: hidden;
+            height: 100vh;
         }
 
         .controls {
@@ -33,36 +26,78 @@
 </head>
 
 <body>
-<div id="pixi-container"></div>
-
-<div class="controls">
-    <h4>Create Room Plan</h4>
-    <button id="addNodeBtn" class="btn btn-primary btn-sm">Add Node</button>
-    <button id="saveContourBtn" class="btn btn-success btn-sm">Save</button>
-    <div class="mt-2">
-        <small>Zoom: Mouse Wheel. Pan: Right Click + Drag.</small><br>
-    </div>
-    <hr>
-    <div id="selectionControls">
-        <div id="nodeControls" class="hidden control-group">
-            <h5>Node Controls</h5>
-            <p>Selected Node ID: <span id="selectedNodeId"></span></p>
-            <div class="form-group">
-                <label for="nodeAngle">Angle to Next (degrees):</label>
-                <input type="number" id="nodeAngle" class="form-control form-control-sm" step="any">
-            </div>
-            <button id="setNodeAngleBtn" class="btn btn-info btn-sm">Set Angle</button>
-            <button id="removeNodeBtn" class="btn btn-danger btn-sm">Remove Node</button>
+<div class="container-fluid">
+    <div class="row py-3 bg-dark text-white mb-4">
+        <div class="col-md-6">
+            <h2>Room Contour Creator</h2>
         </div>
+        <div class="col-md-6 text-end">
+            <button id="saveContourBtn" class="btn btn-success">Save</button>
+        </div>
+    </div>
 
-        <div id="edgeControls" class="hidden control-group">
-            <h5>Edge Controls</h5>
-            <p>Selected Edge: <span id="selectedEdgeNodes"></span></p>
-            <div class="form-group">
-                <label for="edgeDistance">Distance (cm):</label>
-                <input type="number" id="edgeDistance" class="form-control form-control-sm" step="any">
+    <div class="control-panel">
+        <div id="rotation-slider-panel" style="display: none">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label for="rotation-slider">Rotation:</label>
+                    <input type="range" class="form-range" id="rotation-slider" min="0" max="360" value="0">
+                    <div id="rotation-value">0°</div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div id="selected-item">Selected: None</div>
+                </div>
+                <div class="col-md-3">
+                    <button id="deletion-btn" class="btn btn-danger">Delete</button>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div id="position-info">Position: X: 0 Y: 0</div>
+                </div>
             </div>
-            <button id="setEdgeDistanceBtn" class="btn btn-info btn-sm">Set Distance</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-9">
+            <div id="pixi-container"></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0">Controls</h4>
+                </div>
+                <div class="card-body">
+                    <div class="controls">
+                        <button id="addNodeBtn" class="btn btn-primary btn-sm">Add Node</button>
+                        <div class="mt-2">
+                            <small>Zoom: Mouse Wheel. Pan: Right Click + Drag.</small><br>
+                        </div>
+                        <hr>
+                        <div id="selectionControls">
+                            <div id="nodeControls" class="hidden control-group">
+                                <h5>Node Controls</h5>
+                                <p>Selected Node ID: <span id="selectedNodeId"></span></p>
+                                <div class="form-group">
+                                    <label for="nodeAngle">Angle to Next (degrees):</label>
+                                    <input type="number" id="nodeAngle" class="form-control form-control-sm" step="any">
+                                </div>
+                                <button id="setNodeAngleBtn" class="btn btn-info btn-sm">Set Angle</button>
+                                <button id="removeNodeBtn" class="btn btn-danger btn-sm">Remove Node</button>
+                            </div>
+
+                            <div id="edgeControls" class="hidden control-group">
+                                <h5>Edge Controls</h5>
+                                <p>Selected Edge: <span id="selectedEdgeNodes"></span></p>
+                                <div class="form-group">
+                                    <label for="edgeDistance">Distance (cm):</label>
+                                    <input type="number" id="edgeDistance" class="form-control form-control-sm" step="any">
+                                </div>
+                                <button id="setEdgeDistanceBtn" class="btn btn-info btn-sm">Set Distance</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
