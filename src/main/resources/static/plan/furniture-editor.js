@@ -12,7 +12,6 @@ class FurnitureEditor {
         this.isDragging = false;
         this.lastValidPosition = {x: 0, y: 0};
 
-        // FIXME: issues with collisions after you pan or zoom, perhaps just make it static
         this.canvas = new DraggableCanvas(this.app);
         this.app.stage.addChild(this.canvas);
 
@@ -206,7 +205,7 @@ class FurnitureEditor {
     }
 
     nudgeItemIntoRoom(item) {
-        const roomBounds = this.getRoomBounds();
+        const roomBounds = this.room.getBounds();
 
         const itemBounds = item.getBounds();
 
@@ -256,6 +255,8 @@ class FurnitureEditor {
     }
 
     isInsideRoom(item) {
+        const roomPolygon = this.getRoomPolyCoords();
+
         const itemBounds = item.getBounds();
 
         const itemPoints = [
@@ -266,12 +267,24 @@ class FurnitureEditor {
         ];
 
         for (const point of itemPoints) {
-            if (!this.isPointInPolygon(point, this.wallNodes)) {
+            if (!this.isPointInPolygon(point, roomPolygon)) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    // gets new polygon coordinates after panning or zooming
+    getRoomPolyCoords() {
+        const globalPolygon = [];
+
+        for (const node of this.wallNodes) {
+            const globalPoint = this.room.toGlobal(new PIXI.Point(node.x, node.y));
+            globalPolygon.push({x: globalPoint.x, y: globalPoint.y});
+        }
+
+        return globalPolygon;
     }
 
     isPointInPolygon(point, polygon) {
@@ -292,29 +305,8 @@ class FurnitureEditor {
         return inside;
     }
 
-    getRoomBounds() {
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxX = -Infinity;
-        let maxY = -Infinity;
-
-        for (const node of this.wallNodes) {
-            minX = Math.min(minX, node.x);
-            minY = Math.min(minY, node.y);
-            maxX = Math.max(maxX, node.x);
-            maxY = Math.max(maxY, node.y);
-        }
-
-        return {
-            left: minX,
-            top: minY,
-            right: maxX,
-            bottom: maxY
-        };
-    }
-
     calculateRoomCenter() {
-        const bounds = this.getRoomBounds();
+        const bounds = this.room.getBounds();
         return {
             x: (bounds.left + bounds.right) / 2,
             y: (bounds.top + bounds.bottom) / 2
