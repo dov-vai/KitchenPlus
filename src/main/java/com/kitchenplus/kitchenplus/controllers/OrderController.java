@@ -18,10 +18,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.Stripe;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -107,12 +104,13 @@ public class OrderController {
     }
     //---------------extend fix----------
     @GetMapping("/shipping")
-    public String showShippingDetails() {
+    public String showShippingDetails(Model model) {
+        model.addAttribute("deliveryAddress", new DeliveryAddress());
         return "shippingForm";
     }
 
     @GetMapping("/payment")
-    public String showPaymentsForm(Model model) {
+    public String showPayments(Model model) {
         model.addAttribute("paymentFormDTO", new PaymentsDTO());
         return "paymentsView";
     }
@@ -139,18 +137,24 @@ public class OrderController {
     //--------------------------------------------------calculating shipping------------------------------------------------:
     @PostMapping("/address/check")
     @ResponseBody
-    public boolean checkAddress(@RequestBody DeliveryAddress deliveryAddress, @CookieValue(value = "auth_token", required = false) String token) {
+    public Map<String, Object> checkAddress(@RequestBody DeliveryAddress deliveryAddress, @CookieValue(value = "auth_token", required = false) String token) {
+        HashMap<String, Object> result = new HashMap<>();
         try{
             Optional<Session> session = sessionRepository.findByToken(token);
             User user = session.get().getUser();
             Client client = (Client) user;
             deliveryAddress.setClient(client);
             deliveryAddressService.postAddress(deliveryAddress);
-            return true;
+            double shippingCost = calculateShippingCost(deliveryAddress);
+            result.put("success", true);
+            result.put("shippingCost", shippingCost);
+            return result;
         }
         catch (Exception e){
             e.printStackTrace();
-            return false;
+            result.put("success", false);
+            result.put("shippingCost", 0.0);
+            return result;
         }
     }
     //-------------------------------------distance calculation---------------------
@@ -193,8 +197,7 @@ public class OrderController {
     }
 
     //calculate only shipping:
-    @PostMapping("/shipping/cost")
-    public double calculateShippingCost(@RequestBody DeliveryAddress deliveryAddress){
+    public double calculateShippingCost(DeliveryAddress deliveryAddress){
         double shipping;
         DistanceUtils distanceUtils = new DistanceUtils();
         double distance_hervesine = distanceUtils.distanceHervesine(deliveryAddress.getLatitude(), deliveryAddress.getLongitude());
@@ -211,6 +214,9 @@ public class OrderController {
             shipping = wt * 3;
         }
         return shipping;
+    }
+    public void sumOfItem(Order order, double totalPrice, double shipping){
+        order.setSumOfOrder((totalPrice + shipping) * 1.21);
     }
     @PostMapping("/place")
     public String showPlaceOrder(@CookieValue(value = "auth_token", required = false) String token, Model model) {
@@ -241,7 +247,8 @@ public class OrderController {
         // order.setPointsApplied(0);
 
         List<OrderLine> orderLines = new ArrayList<>();
-        order.setSumOfOrder(shoppingCart.getTotalPrice() + shippingCost);
+        sumOfItem(order, shoppingCart.getTotalPrice(), shippingCost);
+        //order.setSumOfOrder(shoppingCart.getTotalPrice() + shippingCost);
         for (CartItem item: shoppingCart.getItems()){
             OrderLine orderLine = new OrderLine();
             orderLine.setItem(item.getItem());
