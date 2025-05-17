@@ -80,7 +80,7 @@
         </div>
         <h4
         ><strong>€</strong>
-            <span th:text="${orderLine.count * orderLine.unitPrice}"></span>
+            <span th:text="${order.getSumOfOrder()}"></span>
         </h4>
         <form th:action="@{/orders/checkIfCancellable/{id}(id=${order.id})}" method="get">
             <button type="submit" class="btn btn-danger" data-toggle="modal" data-target="#exampleModalLong">Cancel order</button>
