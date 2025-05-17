@@ -7,7 +7,8 @@
 </head>
 <body>
 <div th:replace="fragments/header :: site-header"></div>
-<div th:object="${order}" style="display: flex; margin-left: 150px;margin-top: 30px; flex-direction: column; width: 30%; height: 100%">
+
+<div th:object="${order}" style="display: flex; margin-left: auto;margin-top: 30px; margin-right: auto; flex-direction: column; width: 30%; height: 100%">
     <h3 class="card-text">Delivery address</h3>
     <form>
         <div style="display: flex; gap: 15px; flex-direction: column">
@@ -30,7 +31,10 @@
             <div id="validation-error" class="alert alert-danger" role="alert" style="display: none">
                 Address does not exist
             </div>
-            <button type="submit" class="btn btn-primary" th:href="@{/orders/payment}">Save changes and proceed</button>
+            <p class="card-text"><strong>Calculated shipping cost:</strong> <span id="shipping-cost" ></span></p>
+            <button type="submit" class="btn btn-primary">Save address</button>
+            <a id="proceed" class="btn btn-primary d-none" href="/orders/payment">Proceed to checkout</a>
+
         </div>
     </form>
 
@@ -60,7 +64,7 @@
                     }
                     );
                     $('#validation-error').hide();
-                    window.location.href = '/orders/payment';
+                    //window.location.href = '/orders/payment';
                 }
                 else {
                     $('#validation-error').show();
@@ -76,9 +80,10 @@
             contentType: 'application/json',
             data: JSON.stringify(addressData),
             success: function (response) {
-                if (response === true){
+                if (response.success){
                     console.log('Address saved:', response);
-
+                    $('#shipping-cost').text(response.shippingCost.toFixed(2) + " €");
+                    $('#proceed').removeClass('d-none');
                 }
                 else {
                     alert("Address doesnt exist");
