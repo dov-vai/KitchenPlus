@@ -18,11 +18,17 @@
             </p>
         </div>
         <div>
-            <a th:href="@{/plans/{setId}(setId=${set.id})}" class="btn btn-outline-primary me-2">
+            <button class="btn btn-danger">Delete</button>
+            <button class="btn btn-primary">Edit</button>
+            <a th:href="@{/plans/new/{id}(id=${set.id})}" class="btn btn-outline-primary">
+                Create Plan
+            </a>
+
+            <a th:href="@{/plans/{setId}(setId=${set.id})}" class="btn btn-outline-primary">
                 View Plans
             </a>
             <a th:href="@{/sets}" class="btn btn-outline-secondary me-2">
-                Back to Sets
+                Back
             </a>
         </div>
     </div>

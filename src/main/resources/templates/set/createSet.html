@@ -8,7 +8,7 @@
     <form id="createSetForm" th:action="@{/sets/new}" method="post" th:object="${setCreationForm}">
         <div class="mb-3">
             <label for="title" class="form-label">Set Title</label>
-            <input type="text" class="form-control" id="title" th:field="*{title}">
+            <input type="text" class="form-control" id="title" th:field="*{title}" placeholder="Title">
             <div class="text-danger" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
         </div>
 
