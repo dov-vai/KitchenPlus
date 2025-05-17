@@ -40,6 +40,14 @@
             border-radius: 5px;
             margin-bottom: 15px;
         }
+
+        #spacer-modal .modal-dialog {
+            max-width: 400px;
+        }
+
+        .input-group-text {
+            min-width: 45px;
+        }
     </style>
 </head>
 <body>
@@ -79,6 +87,7 @@
             <div id="pixi-container"></div>
         </div>
         <div class="col-md-3">
+            <div id="object-alert" class="alert alert-danger" style="display: none;"></div>
             <div id="triangle-alert" class="alert alert-info" style="display: none;"></div>
             <div class="card">
                 <div class="card-header bg-light">
@@ -99,6 +108,41 @@
                         <button id="add-spacer" class="btn btn-danger w-100">Add Spacer</button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Spacer Modal -->
+<div class="modal fade" id="spacer-modal" tabindex="-1" aria-labelledby="spacerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="spacerModalLabel">Add Spacer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="spacer-alert" class="alert alert-danger" style="display: none;"></div>
+                <form id="spacer-form">
+                    <div class="mb-3">
+                        <label for="spacer-width" class="form-label">Width</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="spacer-width" min="1" value="50">
+                            <span class="input-group-text">cm</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="spacer-height" class="form-label">Height</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="spacer-height" min="1" value="50">
+                            <span class="input-group-text">cm</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="add-spacer-confirm">Add</button>
             </div>
         </div>
     </div>

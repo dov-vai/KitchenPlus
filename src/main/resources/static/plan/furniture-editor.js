@@ -35,6 +35,25 @@ class FurnitureEditor extends PlanViewer {
         this.saveButton = document.getElementById('save-btn');
         this.deletionButton = document.getElementById('deletion-btn');
         this.triangleAlert = document.getElementById('triangle-alert');
+        this.objectAlert = document.getElementById('object-alert');
+        this.spacerBtn = document.getElementById('add-spacer');
+        this.initSpacerModal();
+    }
+
+    initSpacerModal(){
+        this.addSpacerConfirmBtn = document.getElementById("add-spacer-confirm");
+        this.spacerWidthInput = document.getElementById("spacer-width");
+        this.spacerHeightInput = document.getElementById("spacer-height");
+        this.spacerAlert = document.getElementById("spacer-alert");
+        const spacerModal = document.getElementById("spacer-modal");
+        this.spacerModalInstance = new bootstrap.Modal(spacerModal);
+    }
+
+    showSpacerInputForm() {
+        this.spacerAlert.style.display = 'none';
+        this.spacerWidthInput.value = "50";
+        this.spacerHeightInput.value = "50";
+        this.spacerModalInstance.show();
     }
 
     setupEventListeners() {
@@ -42,15 +61,19 @@ class FurnitureEditor extends PlanViewer {
         this.rotationSlider.addEventListener('input', () => {
             if (this.selectedItem) {
                 const rotation = parseInt(this.rotationSlider.value);
-                this.rotateItem(this.selectedItem, rotation);
+                this.rotateObject(this.selectedItem, rotation);
                 this.rotationValue.textContent = `${rotation}°`;
             }
         });
 
         // spacer button
-        document.getElementById('add-spacer').addEventListener('click', () => {
-            this.showSpacerDialog();
+        this.spacerBtn.addEventListener('click', () => {
+            this.showSpacerInputForm();
         });
+
+        this.addSpacerConfirmBtn.addEventListener('click', () => {
+            this.addSpacer();
+        })
 
         // save button
         this.saveButton.addEventListener('click', () => {
@@ -80,7 +103,9 @@ class FurnitureEditor extends PlanViewer {
                 const name = item.querySelector('strong').textContent;
                 const centerPosition = this.calculateRoomCenter();
 
-                this.addFurnitureItem({
+                this.objectAlert.style.display = 'none';
+
+                const added = this.addFurnitureItem({
                     x: centerPosition.x,
                     y: centerPosition.y,
                     id: id,
@@ -89,6 +114,11 @@ class FurnitureEditor extends PlanViewer {
                     height: height,
                     color: this.stringToColor(name)
                 });
+
+                if (!added) {
+                    this.objectAlert.style.display = "block";
+                    this.objectAlert.textContent = `${name} doesn't fit into the room`
+                }
             });
         });
     }
@@ -105,14 +135,15 @@ class FurnitureEditor extends PlanViewer {
         this.setupDraggableItem(furniture);
 
         if (!this.isInsideRoom(furniture)) {
-            alert(`${itemData.name} doesn't fit in the room.`);
-            return;
+            return false;
         }
 
         this.furnitureContainer.addChild(furniture);
         this.furnitureItems.push(furniture);
 
-        this.selectItem(furniture);
+        this.selectObject(furniture);
+
+        return true;
     }
 
     setupDraggableItem(item) {
@@ -121,12 +152,12 @@ class FurnitureEditor extends PlanViewer {
             .on('pointerup', this.onDragEnd.bind(this, item))
             .on('pointerupoutside', this.onDragEnd.bind(this, item))
             .on('pointermove', this.onDragMove.bind(this, item))
-            .on('click', () => this.selectItem(item));
+            .on('click', () => this.selectObject(item));
     }
 
     onDragStart(item, event) {
         if (!this.selectedItem || this.selectedItem !== item) {
-            this.selectItem(item);
+            this.selectObject(item);
         }
 
         this.triangleAlert.textContent = "";
@@ -180,7 +211,7 @@ class FurnitureEditor extends PlanViewer {
 
             item.position.set(localPos.x, localPos.y);
 
-            if (this.checkCollision(item) || !this.isInsideRoom(item)) {
+            if (this.checkCollisions(item)) {
                 item.position.set(oldX, oldY);
             } else {
                 this.lastValidPosition = {x: item.x, y: item.y};
@@ -190,7 +221,18 @@ class FurnitureEditor extends PlanViewer {
         }
     }
 
-    selectItem(item) {
+    updatePositionInfo(item) {
+        this.positionInfo.textContent = `Position: X: ${Math.round(item.x)} Y: ${Math.round(item.y)}`;
+    }
+
+    showObjectControls(item){
+        this.rotationPanel.style.display = 'block';
+        this.rotationSlider.value = (item.rotation * 180 / Math.PI) % 360;
+        this.rotationValue.textContent = `${Math.round((item.rotation * 180 / Math.PI) % 360)}°`;
+        this.selectedItemText.textContent = `Selected: ${item.name}`;
+    }
+
+    selectObject(item) {
         if (this.selectedItem) {
             this.selectedItem.tint = 0xFFFFFF;
         }
@@ -199,26 +241,19 @@ class FurnitureEditor extends PlanViewer {
         this.selectedItem.tint = 0xFFCC00;
 
         // update ui
-        this.rotationPanel.style.display = 'block';
-        this.rotationSlider.value = (item.rotation * 180 / Math.PI) % 360;
-        this.rotationValue.textContent = `${Math.round((item.rotation * 180 / Math.PI) % 360)}°`;
-        this.selectedItemText.textContent = `Selected: ${item.name}`;
+        this.showObjectControls(item);
         this.updatePositionInfo(item);
     }
 
-    updatePositionInfo(item) {
-        this.positionInfo.textContent = `Position: X: ${Math.round(item.x)} Y: ${Math.round(item.y)}`;
-    }
-
-    rotateItem(item, degrees) {
+    rotateObject(item, degrees) {
         item.rotation = MathUtils.degreesToRadians(degrees);
 
-        if (!this.isInsideRoom(item) || this.checkCollision(item)) {
-            this.nudgeItemIntoRoom(item);
+        if (!this.isInsideRoom(item)) {
+            this.pushObjectIntoBounds(item);
         }
     }
 
-    nudgeItemIntoRoom(item) {
+    pushObjectIntoBounds(item) {
         const roomBounds = this.room.getBounds();
 
         const itemBounds = item.getBounds();
@@ -244,7 +279,11 @@ class FurnitureEditor extends PlanViewer {
     }
 
     // FIXME: collisions feel "sticky", makes it hard to move the object
-    checkCollision(item) {
+    checkCollisions(item) {
+        if (!this.isInsideRoom(item)) {
+            return true;
+        }
+
         for (const other of this.furnitureItems) {
             // skip collision check with itself
             if (other !== item) {
@@ -420,18 +459,19 @@ class FurnitureEditor extends PlanViewer {
         };
     }
 
-    showSpacerDialog() {
-        const width = parseInt(prompt("Enter spacer width (cm):", "50"));
-        const height = parseInt(prompt("Enter spacer height (cm):", "50"));
+    addSpacer() {
+        const width = parseInt(this.spacerWidthInput.value);
+        const height = parseInt(this.spacerHeightInput.value);
 
-        if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
-            alert("Please enter valid positive dimensions for the spacer.");
+        if (isNaN(width) || width <= 0 || height <= 0) {
+            this.spacerAlert.style.display = "block";
+            this.spacerAlert.textContent = "Width and height cannot be negative"
             return;
         }
 
         const centerPosition = this.calculateRoomCenter();
 
-        this.addFurnitureItem({
+        const added = this.addFurnitureItem({
             x: centerPosition.x,
             y: centerPosition.y,
             name: "Spacer",
@@ -439,6 +479,14 @@ class FurnitureEditor extends PlanViewer {
             height: height,
             color: this.SPACER_COLOR
         });
+
+        if (!added) {
+            this.spacerAlert.style.display = "block";
+            this.spacerAlert.textContent = "Spacer is too large to fit into the room"
+            return;
+        }
+
+        this.spacerModalInstance.hide();
     }
 
     async savePlan() {

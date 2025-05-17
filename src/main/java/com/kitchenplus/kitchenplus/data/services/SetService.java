@@ -28,7 +28,7 @@ public class SetService {
         return setRepository.findAll();
     }
 
-    public Set insert(Set set) {
+    public Set save(Set set) {
         return setRepository.save(set);
     }
 

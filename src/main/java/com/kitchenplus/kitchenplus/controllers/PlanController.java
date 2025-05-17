@@ -24,7 +24,7 @@ public class PlanController {
     }
 
     @GetMapping("/{setId}")
-    public String getSetPlans(@PathVariable Long setId, Model model) {
+    public String showPlansList(@PathVariable Long setId, Model model) {
         setService.get(setId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid set ID: " + setId));
 
@@ -36,14 +36,14 @@ public class PlanController {
     }
 
     @GetMapping("/new/{setId}")
-    public String createPlan(@PathVariable Long setId, Model model) {
+    public String showPlanCreation(@PathVariable Long setId, Model model) {
         model.addAttribute("setId", setId);
-        return "plan/createPlan";
+        return "/plan/planCreatePage";
     }
 
     @PostMapping("/new/{setId}")
     @ResponseBody
-    public Map<String, Object> createPlan(@PathVariable Long setId, @RequestBody ContourDataDto contourDataDto) {
+    public Map<String, Object> addPlan(@PathVariable Long setId, @RequestBody ContourDataDto contourDataDto) {
         var set = setService.get(setId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid set ID: " + setId));
 
@@ -74,20 +74,20 @@ public class PlanController {
     }
 
     @GetMapping("/view/{planId}")
-    public String viewPlan(@PathVariable Long planId, Model model) {
+    public String showPlan(@PathVariable Long planId, Model model) {
         populatePlanModel(planId, model);
-        return "plan/viewPlan";
+        return "plan/planPage";
     }
 
     @GetMapping("/edit/{planId}")
-    public String editPlan(@PathVariable Long planId, Model model) {
+    public String showPlanEdit(@PathVariable Long planId, Model model) {
         populatePlanModel(planId, model);
-        return "plan/editPlan";
+        return "plan/planEditPage";
     }
 
     @PostMapping("/edit/{planId}")
     @ResponseBody
-    public Map<String, Object> editPlan(@PathVariable Long planId, @RequestBody PlanDataDto planDataDto) {
+    public Map<String, Object> updatePlan(@PathVariable Long planId, @RequestBody PlanDataDto planDataDto) {
         var plan = planService.get(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plan ID: " + planId));
 

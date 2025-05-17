@@ -15,7 +15,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/sets")
 public class SetController {
-
     private final SetService setService;
     private final ItemService itemService;
 
@@ -25,13 +24,13 @@ public class SetController {
     }
 
     @GetMapping
-    public String getAllSets(Model model) {
+    public String showSetsList(Model model) {
         model.addAttribute("sets", setService.getAll());
         return "set/setsList";
     }
 
     @GetMapping("/{id}")
-    public String getSet(@PathVariable Long id, Model model) {
+    public String showSetDetails(@PathVariable Long id, Model model) {
         Set set = setService.get(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid set ID"));
 
@@ -44,23 +43,22 @@ public class SetController {
 
         model.addAttribute("set", set);
         model.addAttribute("totalPrice", totalPrice);
-        return "set/viewSet";
+        return "set/setDetails";
     }
 
     @GetMapping("/new")
-    public String createSet(@ModelAttribute("setCreationForm") SetCreationDto setCreationDto, Model model) {
+    public String showSetCreateForm(@ModelAttribute("setCreationForm") SetCreationDto setCreationDto, Model model) {
         model.addAttribute("items", itemService.findAll());
-        return "set/createSet";
+        return "set/setCreateForm";
     }
 
     @PostMapping("/new")
-    public String saveSet(@Valid @ModelAttribute("setCreationForm") SetCreationDto setCreationDto,
-                          BindingResult bindingResult,
-                          Model model,
-                          RedirectAttributes redirectAttributes) {
+    public String addNewSet(@Valid @ModelAttribute("setCreationForm") SetCreationDto setCreationDto,
+                            BindingResult bindingResult,
+                            Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("items", itemService.findAll());
-            return "set/createSet";
+            return "set/setCreateForm";
         }
 
         Set set = new Set();
@@ -74,9 +72,7 @@ public class SetController {
             });
         }
 
-        Set savedSet = setService.insert(set);
-        redirectAttributes.addFlashAttribute("successMessage", "Set created successfully!");
-
+        Set savedSet = setService.save(set);
         return "redirect:/sets/" + savedSet.getId();
     }
 }

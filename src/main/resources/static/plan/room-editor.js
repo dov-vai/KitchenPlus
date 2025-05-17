@@ -38,11 +38,11 @@ class RoomEditor {
     }
 
     setupEventListeners() {
-        this.addNodeBtn.addEventListener("click", this.handleAddNode.bind(this));
-        this.removeNodeBtn.addEventListener("click", this.handleRemoveNode.bind(this));
-        this.setEdgeDistanceBtn.addEventListener("click", this.handleSetEdgeDistance.bind(this));
-        this.setNodeAngleBtn.addEventListener("click", this.handleSetNodeAngle.bind(this));
-        this.saveContourBtn.addEventListener("click", this.handleSaveContour.bind(this));
+        this.addNodeBtn.addEventListener("click", this.addNode.bind(this));
+        this.removeNodeBtn.addEventListener("click", this.deleteNode.bind(this));
+        this.setEdgeDistanceBtn.addEventListener("click", this.updatePosByDistance.bind(this));
+        this.setNodeAngleBtn.addEventListener("click", this.updatePosByAngle.bind(this));
+        this.saveContourBtn.addEventListener("click", this.savePlan.bind(this));
 
         // background click to deselect
         this.canvas.on("pointerdown", (event) => {
@@ -52,7 +52,7 @@ class RoomEditor {
         });
     }
 
-    async handleSaveContour() {
+    async savePlan() {
         if (this.nodes.length < 3) {
             alert("Please create at least 3 nodes to form a valid room contour.");
             return;
@@ -94,12 +94,14 @@ class RoomEditor {
     selectNode(node) {
         this.deselectAll();
         this.selectedNode = node;
+        this.showAngleInputForm();
         this.redraw();
     }
 
     selectEdge(node1, node2, graphics) {
         this.deselectAll();
         this.selectedEdge = {node1, node2, graphics};
+        this.showDistanceInputForm();
         this.redraw();
     }
 
@@ -228,7 +230,18 @@ class RoomEditor {
         this.drawScene();
     }
 
-    updateUI() {
+    showDistanceInputForm(){
+        if (this.selectedEdge) {
+            this.edgeControlsUI.classList.remove("hidden");
+            this.selectedEdgeNodesUI.textContent = `Node ${this.selectedEdge.node1.id} to Node ${this.selectedEdge.node2.id}`;
+            const distance = MathUtils.getDistance(this.selectedEdge.node1, this.selectedEdge.node2);
+            this.edgeDistanceInput.value = distance.toFixed(2);
+        } else {
+            this.edgeControlsUI.classList.add("hidden");
+        }
+    }
+
+    showAngleInputForm(){
         if (this.selectedNode) {
             this.nodeControlsUI.classList.remove("hidden");
             this.selectedNodeIdUI.textContent = this.selectedNode.id;
@@ -244,18 +257,14 @@ class RoomEditor {
         } else {
             this.nodeControlsUI.classList.add("hidden");
         }
-
-        if (this.selectedEdge) {
-            this.edgeControlsUI.classList.remove("hidden");
-            this.selectedEdgeNodesUI.textContent = `Node ${this.selectedEdge.node1.id} to Node ${this.selectedEdge.node2.id}`;
-            const distance = MathUtils.getDistance(this.selectedEdge.node1, this.selectedEdge.node2);
-            this.edgeDistanceInput.value = distance.toFixed(2);
-        } else {
-            this.edgeControlsUI.classList.add("hidden");
-        }
     }
 
-    handleAddNode() {
+    updateUI() {
+        this.showAngleInputForm();
+        this.showDistanceInputForm();
+    }
+
+    addNode() {
         const newNodeId = this.nodeIdCounter++;
         let x, y;
 
@@ -285,7 +294,7 @@ class RoomEditor {
         this.selectNode(newNode);
     }
 
-    handleRemoveNode() {
+    deleteNode() {
         if (!this.selectedNode || this.nodes.length <= 3) {
             alert("Cannot remove node. A polygon needs at least 3 nodes.");
             return;
@@ -294,7 +303,7 @@ class RoomEditor {
         this.deselectAll();
     }
 
-    handleSetEdgeDistance() {
+    updatePosByDistance() {
         if (!this.selectedEdge) return;
 
         const newDistance = parseFloat(this.edgeDistanceInput.value);
@@ -330,7 +339,7 @@ class RoomEditor {
         this.redraw();
     }
 
-    handleSetNodeAngle() {
+    updatePosByAngle() {
         // need at least 2 nodes for an angle
         if (!this.selectedNode || this.nodes.length < 2) return;
 
@@ -367,10 +376,10 @@ class RoomEditor {
     }
 
     initializeRoomOutline() {
-        this.handleAddNode();
-        this.handleAddNode();
-        this.handleAddNode();
-        this.handleAddNode();
+        this.addNode();
+        this.addNode();
+        this.addNode();
+        this.addNode();
         this.nodes[1].y -= 300;
         this.nodes[1].x -= 100;
         this.nodes[2].y -= 300;

@@ -3,12 +3,6 @@
 <div th:replace="~{fragments/head :: head(title='View Set')}"></div>
 <body>
 <div class="container mt-4">
-    <!-- Success message from creation redirect -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <span th:text="${successMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
     <!-- Set header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
