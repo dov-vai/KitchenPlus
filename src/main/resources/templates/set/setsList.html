@@ -26,7 +26,6 @@
                     <tr>
                         <th>ID</th>
                         <th>Title</th>
-                        <th>Client</th>
                         <th>Items Count</th>
                         <th>Actions</th>
                     </tr>
@@ -35,7 +34,6 @@
                     <tr th:each="set : ${sets}">
                         <td th:text="${set.id}"></td>
                         <td th:text="${set.title}"></td>
-                        <td th:text="${set.client != null ? set.client.username : 'No client'}"></td>
                         <td th:text="${set.items != null ? set.items.size() : 0}"></td>
                         <td>
                             <a th:href="@{/sets/{id}(id=${set.id})}" class="btn btn-sm btn-outline-primary">
