@@ -278,24 +278,55 @@ class FurnitureEditor extends PlanViewer {
         item.position.set(item.x + xAdjust, item.y + yAdjust);
     }
 
-    // FIXME: collisions feel "sticky", makes it hard to move the object
     checkCollisions(item) {
         if (!this.isInsideRoom(item)) {
             return true;
         }
 
-        for (const other of this.furnitureItems) {
-            // skip collision check with itself
-            if (other !== item) {
-                const itemBounds = item.getBounds();
-                const otherBounds = other.getBounds();
+        const itemPolygon = this.createSATPolygon(item);
 
-                if (this.boundsIntersect(itemBounds, otherBounds)) {
+        for (const other of this.furnitureItems) {
+            if (other !== item) {
+                const otherPolygon = this.createSATPolygon(other);
+
+                if (SAT.testPolygonPolygon(itemPolygon, otherPolygon)) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    createSATPolygon(pixiObject) {
+        const bounds = pixiObject.getBounds();
+        const center = {
+            x: pixiObject.x,
+            y: pixiObject.y
+        };
+
+        // Create vertices for the rectangle
+        const halfWidth = pixiObject.width / 2;
+        const halfHeight = pixiObject.height / 2;
+
+        const vertices = [
+            new SAT.Vector(-halfWidth, -halfHeight),
+            new SAT.Vector(halfWidth, -halfHeight),
+            new SAT.Vector(halfWidth, halfHeight),
+            new SAT.Vector(-halfWidth, halfHeight)
+        ];
+
+        // Create the polygon
+        const polygon = new SAT.Polygon(
+            new SAT.Vector(center.x, center.y),
+            vertices
+        );
+
+        // Apply rotation
+        if (pixiObject.rotation !== 0) {
+            polygon.rotate(pixiObject.rotation);
+        }
+
+        return polygon;
     }
 
     // heuristic algorithm for checking kitchen triangle rule
