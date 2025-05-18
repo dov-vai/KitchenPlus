@@ -2,14 +2,12 @@ package com.kitchenplus.kitchenplus.data.services;
 
 import com.kitchenplus.kitchenplus.AppProperties;
 import com.kitchenplus.kitchenplus.data.enums.LinkType;
-import com.kitchenplus.kitchenplus.data.models.Client;
-import com.kitchenplus.kitchenplus.data.models.ConfirmationLink;
-import com.kitchenplus.kitchenplus.data.models.Session;
-import com.kitchenplus.kitchenplus.data.models.User;
+import com.kitchenplus.kitchenplus.data.models.*;
 import com.kitchenplus.kitchenplus.data.repositories.ConfirmationLinkRepository;
 import com.kitchenplus.kitchenplus.data.repositories.SessionRepository;
 import com.kitchenplus.kitchenplus.data.repositories.UserRepository;
 import com.kitchenplus.kitchenplus.exceptions.UserFriendlyException;
+import com.kitchenplus.kitchenplus.utils.AuthUtils;
 import com.kitchenplus.kitchenplus.utils.GeneratorUtils;
 
 import jakarta.mail.Authenticator;
@@ -236,4 +234,39 @@ public class UserService {
         // Delete all email confirmation links for this user
         confirmationLinkRepository.deleteByUserIdAndType(user.getId(), link.getType());
     }
+
+    /**
+     * Tries to get the currently authenticated user.
+     * @return User if authenticated, empty otherwise
+     */
+    public Optional<User> getAuthUser() {
+        var email = AuthUtils.getEmail();
+
+        if (email.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return userRepository.findByEmail(email.get());
+    }
+
+    /**
+     * Generic method to get authenticated user as a specific type.
+     * @param <T> The type of user to return (e.g., Manager, Client)
+     * @param userClass The class object representing the desired user type
+     * @return The authenticated user as the specified type if it matches, empty otherwise
+     */
+    public <T extends User> Optional<T> getAuthUserAs(Class<T> userClass) {
+        var user = getAuthUser();
+
+        if (user.isEmpty()) {
+            return Optional.empty();
+        }
+
+        if (userClass.isInstance(user.get())) {
+            return Optional.of(userClass.cast(user.get()));
+        }
+
+        return Optional.empty();
+    }
+
 }
