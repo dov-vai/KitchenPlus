@@ -3,12 +3,14 @@ package com.kitchenplus.kitchenplus.controllers;
 import com.kitchenplus.kitchenplus.data.models.*;
 import com.kitchenplus.kitchenplus.data.services.PlanService;
 import com.kitchenplus.kitchenplus.data.services.SetService;
+import com.kitchenplus.kitchenplus.data.services.UserService;
 import com.kitchenplus.kitchenplus.dtos.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,14 +19,20 @@ import java.util.Map;
 public class PlanController {
     private final PlanService planService;
     private final SetService setService;
+    private final UserService userService;
 
-    public PlanController(PlanService planService, SetService setService) {
+    public PlanController(PlanService planService, SetService setService, UserService userService) {
         this.planService = planService;
         this.setService = setService;
+        this.userService = userService;
     }
 
     @GetMapping("/{setId}")
     public String showPlansList(@PathVariable Long setId, Model model) {
+        if (userService.getAuthUserAs(Client.class).isEmpty()){
+            return "redirect:/login";
+        }
+
         setService.get(setId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid set ID: " + setId));
 
@@ -37,13 +45,22 @@ public class PlanController {
 
     @GetMapping("/new/{setId}")
     public String showPlanCreation(@PathVariable Long setId, Model model) {
+        if (userService.getAuthUserAs(Client.class).isEmpty()){
+            return "redirect:/login";
+        }
+
         model.addAttribute("setId", setId);
         return "/plan/planCreatePage";
     }
 
     @PostMapping("/new/{setId}")
     @ResponseBody
-    public Map<String, Object> addPlan(@PathVariable Long setId, @RequestBody ContourDataDto contourDataDto) {
+    public ResponseEntity<?> addPlan(@PathVariable Long setId, @RequestBody ContourDataDto contourDataDto) {
+        if (userService.getAuthUserAs(Client.class).isEmpty()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized access"));
+        }
+
         var set = setService.get(setId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid set ID: " + setId));
 
@@ -67,27 +84,37 @@ public class PlanController {
 
         Plan savedPlan = planService.save(plan);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("redirect", "/plans/edit/" + savedPlan.getId());
-
-        return response;
+        return ResponseEntity.ok(Map.of("redirect", "/plans/edit/" + savedPlan.getId()));
     }
 
     @GetMapping("/view/{planId}")
     public String showPlan(@PathVariable Long planId, Model model) {
+        if (userService.getAuthUserAs(Client.class).isEmpty()){
+            return "redirect:/login";
+        }
+
         populatePlanModel(planId, model);
         return "plan/planPage";
     }
 
     @GetMapping("/edit/{planId}")
     public String showPlanEdit(@PathVariable Long planId, Model model) {
+        if (userService.getAuthUserAs(Client.class).isEmpty()){
+            return "redirect:/login";
+        }
+
         populatePlanModel(planId, model);
         return "plan/planEditPage";
     }
 
     @PostMapping("/edit/{planId}")
     @ResponseBody
-    public Map<String, Object> updatePlan(@PathVariable Long planId, @RequestBody PlanDataDto planDataDto) {
+    public ResponseEntity<?> updatePlan(@PathVariable Long planId, @RequestBody PlanDataDto planDataDto) {
+        if (userService.getAuthUserAs(Client.class).isEmpty()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized access"));
+        }
+
         var plan = planService.get(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plan ID: " + planId));
 
@@ -126,10 +153,7 @@ public class PlanController {
 
         planService.save(plan);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("redirect", "/plans/view/" + planId);
-
-        return response;
+        return ResponseEntity.ok(Map.of("redirect", "/plans/view/" + planId));
     }
 
     private void populatePlanModel(Long planId, Model model) {
