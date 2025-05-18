@@ -16,7 +16,7 @@
 </head>
 <body>
 <div th:replace="fragments/header :: site-header"></div>
-<div th:object="${order}" style="display: flex; justify-content: flex-start;gap: 10px; align-items: flex-start; width: 80%; height: 80%;  flex-direction: column"
+<div th:object="${order}" style="display: flex; justify-content: center;gap: 10px; align-items: center; width: 100%; height: 80%;  flex-direction: column"
 >
     <h1>
         Order Nr. <span th:text="${order.id}"></span>
@@ -80,7 +80,7 @@
         </div>
         <h4
         ><strong>€</strong>
-            <span th:text="${orderLine.count * orderLine.unitPrice}"></span>
+            <span th:text="${order.getSumOfOrder()}"></span>
         </h4>
         <form th:action="@{/orders/checkIfCancellable/{id}(id=${order.id})}" method="get">
             <button type="submit" class="btn btn-danger" data-toggle="modal" data-target="#exampleModalLong">Cancel order</button>

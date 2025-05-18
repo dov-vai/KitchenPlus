@@ -50,13 +50,11 @@
             <div id="card-element">
             </div>
             <div id="card-errors" role="alert"></div>
-            <button type="submit" class="btn btn-primary">Check</button>
+            <button type="submit" class="btn btn-primary">Submit payment</button>
         </form>
-        <a th:href="@{/cart/confirm}" class="btn btn-primary">Proceed to confirmation</a>
+        <a th:href="@{/cart/confirm}" id="confirmation" class="btn btn-primary">Proceed to confirmation</a>
 
     </div>
-
-    
 </div>
 <script>
     document.getElementById('credit').addEventListener('change', function (){
@@ -77,6 +75,13 @@
             type: 'card',
             card: cardElement,
         });
+        if (error){
+            alert("Payment unsuccessfull")
+        }
+        else {
+            window.location.href = "/cart/confirm"
+        }
+
     });
 </script>
 </body>
