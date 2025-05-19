@@ -36,7 +36,7 @@
                             th:text="${set.items != null ? set.items.size() : 0}">0</span></p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Total Price:</strong> <span th:text="${'$' + #numbers.formatDecimal(totalPrice, 1, 2)}">$0.00</span>
+                    <p><strong>Total Price:</strong> <span th:text="${'$' + #numbers.formatDecimal(#aggregates.sum(set.items.![item.price]), 1, 2)}">$0.00</span>
                     </p>
                 </div>
             </div>

@@ -45,15 +45,7 @@ public class SetController {
         Set set = setService.get(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid set ID"));
 
-        double totalPrice = 0.0;
-        if (set.getItems() != null) {
-            totalPrice = set.getItems().stream()
-                    .mapToDouble(setItem -> setItem.getItem().getPrice())
-                    .sum();
-        }
-
         model.addAttribute("set", set);
-        model.addAttribute("totalPrice", totalPrice);
         return "set/setDetails";
     }
 
