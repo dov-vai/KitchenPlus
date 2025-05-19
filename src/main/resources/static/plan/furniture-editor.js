@@ -151,7 +151,7 @@ class FurnitureEditor extends PlanViewer {
             .on('pointerdown', this.onDragStart.bind(this, item))
             .on('pointerup', this.onDragEnd.bind(this, item))
             .on('pointerupoutside', this.onDragEnd.bind(this, item))
-            .on('pointermove', this.onDragMove.bind(this, item))
+            .on('pointermove', this.changeObjectPosition.bind(this, item))
             .on('click', () => this.selectObject(item));
     }
 
@@ -181,14 +181,9 @@ class FurnitureEditor extends PlanViewer {
         }
 
         this.updatePositionInfo(item);
-
-        const triangleCheck = this.checkKitchenTriangle();
-        if (!triangleCheck.valid) {
-            this.showTriangleIssues(triangleCheck.issues);
-        }
     }
 
-    showTriangleIssues(issues) {
+    showKitchenTriangleWarning(issues) {
         let html = "Kitchen triangle violations: <ul>";
 
         for (const issue of issues) {
@@ -201,7 +196,7 @@ class FurnitureEditor extends PlanViewer {
         this.triangleAlert.style.display = 'block';
     }
 
-    onDragMove(item, event) {
+    changeObjectPosition(item, event) {
         if (item.dragging) {
             const newPosition = event.global;
             const localPos = this.furnitureContainer.toLocal(newPosition);
@@ -212,13 +207,22 @@ class FurnitureEditor extends PlanViewer {
             item.position.set(localPos.x, localPos.y);
 
             if (this.checkCollisions(item)) {
-                item.position.set(oldX, oldY);
+                this.revertObjectPosition(item, oldX, oldY);
             } else {
                 this.lastValidPosition = {x: item.x, y: item.y};
             }
 
+            const triangleCheck = this.checkKitchenTriangle();
+            if (!triangleCheck.valid) {
+                this.showKitchenTriangleWarning(triangleCheck.issues);
+            }
+
             this.updatePositionInfo(item);
         }
+    }
+
+    revertObjectPosition(item, oldX, oldY){
+        item.position.set(oldX, oldY);
     }
 
     updatePositionInfo(item) {
@@ -298,13 +302,11 @@ class FurnitureEditor extends PlanViewer {
     }
 
     createSATPolygon(pixiObject) {
-        const bounds = pixiObject.getBounds();
         const center = {
             x: pixiObject.x,
             y: pixiObject.y
         };
 
-        // Create vertices for the rectangle
         const halfWidth = pixiObject.width / 2;
         const halfHeight = pixiObject.height / 2;
 
@@ -315,13 +317,11 @@ class FurnitureEditor extends PlanViewer {
             new SAT.Vector(-halfWidth, halfHeight)
         ];
 
-        // Create the polygon
         const polygon = new SAT.Polygon(
             new SAT.Vector(center.x, center.y),
             vertices
         );
-
-        // Apply rotation
+        
         if (pixiObject.rotation !== 0) {
             polygon.rotate(pixiObject.rotation);
         }
@@ -420,15 +420,6 @@ class FurnitureEditor extends PlanViewer {
                 perimeter
             }
         };
-    }
-
-    boundsIntersect(bounds1, bounds2) {
-        return !(
-            bounds1.right < bounds2.left ||
-            bounds1.left > bounds2.right ||
-            bounds1.bottom < bounds2.top ||
-            bounds1.top > bounds2.bottom
-        );
     }
 
     isInsideRoom(item) {

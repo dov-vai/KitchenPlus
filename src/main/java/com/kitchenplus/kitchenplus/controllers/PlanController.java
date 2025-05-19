@@ -93,7 +93,12 @@ public class PlanController {
             return "redirect:/login";
         }
 
-        populatePlanModel(planId, model);
+        var plan = planService.get(planId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid plan ID: " + planId));
+
+        model.addAttribute("plan", plan);
+
+        populatePlanModel(plan, model);
         return "plan/planPage";
     }
 
@@ -103,7 +108,12 @@ public class PlanController {
             return "redirect:/login";
         }
 
-        populatePlanModel(planId, model);
+        var plan = planService.get(planId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid plan ID: " + planId));
+
+        model.addAttribute("plan", plan);
+
+        populatePlanModel(plan, model);
         return "plan/planEditPage";
     }
 
@@ -156,10 +166,7 @@ public class PlanController {
         return ResponseEntity.ok(Map.of("redirect", "/plans/view/" + planId));
     }
 
-    private void populatePlanModel(Long planId, Model model) {
-        var plan = planService.get(planId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid plan ID: " + planId));
-
+    private void populatePlanModel(Plan plan, Model model) {
         List<WallNodeDto> wallNodes = plan.getNodes().stream()
                 .filter(node -> node instanceof WallNode)
                 .map(node -> new WallNodeDto(node.getId(), node.getX(), node.getY()))
@@ -183,7 +190,6 @@ public class PlanController {
                     return new SetItemDto(setItem.getId(), item.getId(), item.getName(), item.getDescription(), item.getPrice(), item.getHeight(), item.getWidth(), item.getFirstImageLink());
                 }).toList();
 
-        model.addAttribute("plan", plan);
         model.addAttribute("spacerNodes", spacerNodes);
         model.addAttribute("itemNodes", itemNodes);
         model.addAttribute("wallNodes", wallNodes);
