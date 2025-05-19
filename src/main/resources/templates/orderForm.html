@@ -80,12 +80,21 @@
         </div>
         <h4
         ><strong>€</strong>
-            <span th:text="${order.getSumOfOrder()}"></span>
+            <span th:text="${orderLine.getCount() * orderLine.getItem().getPrice()}"></span>
         </h4>
         <form th:action="@{/orders/checkIfCancellable/{id}(id=${order.id})}" method="get">
             <button type="submit" class="btn btn-danger" data-toggle="modal" data-target="#exampleModalLong">Cancel order</button>
         </form>
+
     </div>
+    <div style="display: flex; margin-right: auto; margin-left: auto; margin-bottom: 15px">
+        <h4
+        ><strong>Total €</strong>
+            <span th:text="${#numbers.formatDecimal(order.getSumOfOrder(), 2, 2)}"></span>
+        </h4>
+
+    </div>
+
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

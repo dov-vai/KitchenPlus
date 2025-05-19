@@ -165,6 +165,7 @@ public class OrderController {
         return dist;
     }
     private boolean checkDistance(int[]dist, int v, int u, int wt){
+
         return dist[u] != 1e8 && dist[u] + wt < dist[v];
     }
     private void updateShortestPath(int[] dist, int u, int v, int wt){
@@ -188,7 +189,7 @@ public class OrderController {
         }
         return true;
     }
-    public int[] checkNegativeWeights(int V, int[][] edges, int src) {
+    public int[] checkNegativeCycles(int V, int[][] edges, int src) {
         int[] dist = setVertices(V, src);
         if (!checkVerticeWeights(V, edges, src, dist)) {
             return new int[]{-1};
@@ -205,7 +206,7 @@ public class OrderController {
         int [][] edge = new int[vertice_count * (vertice_count - 1) / 2][3];
         int weight = Math.max(1, (int) Math.round(distance_hervesine));
         edge[0] = new int[]{0, 1, weight};
-        int[] weights = checkNegativeWeights(vertice_count, edge, 0);
+        int[] weights = checkNegativeCycles(vertice_count, edge, 0);
         double wt = (double) weights[1]/10;
         if (wt > 8){
             shipping = wt * 5;
