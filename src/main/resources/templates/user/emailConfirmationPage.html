@@ -2,6 +2,7 @@
 <html lang="en">
   <div th:replace="~{fragments/head :: head(title='Confirmation')}"></div>
   <body>
+    <div th:replace="fragments/header :: site-header"></div>
     <div class="container">
       <div th:if="${error}" th:text="${error}" class="alert alert-danger" role="alert"></div>
     </div>
