@@ -1,10 +1,8 @@
 <!DOCTYPE HTML>
-<html>
-<head>
-    <title>KitchenPlus</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head(title='KitchenPlus')}"></div>
 <body>
+<div th:replace="fragments/header :: site-header"></div>
 <p>Get item List <a href="/items">here</a></p>
 <p>Sets <a href="/sets">here</a></p>
 <p>Login <a href="/login">here</a> or logout <a href="/logout">here</a></p>
